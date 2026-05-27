@@ -36,15 +36,15 @@ Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgre
 
 ## Screenshots
 
-First-run onboarding guides you to build your first experiment — or load a finished demo in one click:
+A calm, editorial instrument — Instrument Serif headlines, mono numerics, a single amber "signal" accent, lines over shadows.
 
-![First-run onboarding](docs/screenshots/onboarding.png)
+![Sign in](docs/screenshots/login.png)
 
-| Experiment builder | Experiment detail (analysis) |
+| First-run onboarding | Experiment detail (analysis) |
 | --- | --- |
-| ![Experiment builder](docs/screenshots/builder.png) | ![Experiment detail](docs/screenshots/detail.png) |
-| **Report** | **Dashboard** |
-| ![Report](docs/screenshots/report.png) | ![Dashboard](docs/screenshots/dashboard.png) |
+| ![Onboarding](docs/screenshots/onboarding.png) | ![Experiment detail](docs/screenshots/detail.png) |
+| **Experiment builder** | **Report (print theme)** |
+| ![Builder](docs/screenshots/builder.png) | ![Report](docs/screenshots/report.png) |
 
 > Captured with Playwright against a seeded demo — regenerate any time with `npm run screenshots` (from `web/`).
 
@@ -163,10 +163,13 @@ The protocol guardrails ([`safety.py`](src/nutrition_lab/safety.py)) are a separ
 
 ## The dashboard
 
-Next.js App Router + a Tailwind v4 design system (a small `@theme` token
-palette, shared `Card` / `Button` / `Badge` / `Field` primitives, and
-consistent loading / empty / error states). Five screens, sharing the same
-chrome:
+Next.js App Router + a Tailwind v4 design system: an `@theme` token palette
+(warm ink on near-black, a single amber "signal" accent, semantic
+improved/worsened/neutral colors, small radii, lines over shadows),
+Instrument Serif / Instrument Sans / JetBrains Mono typography, and a
+component library under `web/components/` (`ui` primitives, `viz`
+charts — `ComparisonBar`, confidence/adherence meters — `brand`, and a
+left `nav` rail). Screens share the same chrome:
 
 - **`/`** — Dashboard: active/draft experiments and the completed library.
 - **`/experiments/new`** — Builder: question, hypothesis, windows (with an optional washout period), intervention, and outcomes, with **live safety warnings** as you type.

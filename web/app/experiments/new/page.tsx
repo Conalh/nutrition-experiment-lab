@@ -3,22 +3,29 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Check, Info, Plus, ArrowRight, Trash2 } from "lucide-react";
 import {
   api,
   type Metric,
   type OutcomeDirection,
   type SafetyWarning,
 } from "@/lib/api";
-import { Badge, Button, Card, Field, inputClass } from "@/components/ui";
-import { ErrorState } from "@/components/states";
-import { SafetyNotice } from "@/components/safety-notice";
+import { TopBar } from "@/components/nav/top-bar";
+import { Card } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { KV } from "@/components/ui/kv";
 
 const METRICS: { value: Metric; label: string; numeric?: boolean }[] = [
   { value: "hunger", label: "Hunger" },
   { value: "energy", label: "Energy" },
   { value: "digestion", label: "Digestion" },
   { value: "sleep_quality", label: "Sleep quality" },
-  { value: "training_performance", label: "Training performance" },
+  { value: "training_performance", label: "Training" },
   { value: "body_weight", label: "Body weight", numeric: true },
 ];
 
@@ -35,7 +42,7 @@ function daysBetween(a: string, b: string): number | null {
   return Number.isFinite(d) ? Math.round(d) + 1 : null;
 }
 
-export default function NewExperiment() {
+export default function BuilderPage() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [question, setQuestion] = useState("");
@@ -56,11 +63,10 @@ export default function NewExperiment() {
   const [error, setError] = useState<string | null>(null);
 
   const intvDays = daysBetween(intvStart, intvEnd);
+  const baselineDays = daysBetween(baselineStart, baselineEnd);
   const primaryKind = useMemo(() => {
     const p = outcomes.find((o) => o.is_primary);
-    return p && METRICS.find((m) => m.value === p.metric)?.numeric
-      ? "numeric"
-      : "rating";
+    return p && METRICS.find((m) => m.value === p.metric)?.numeric ? "numeric" : "rating";
   }, [outcomes]);
 
   const { data: warnings } = useQuery({
@@ -123,9 +129,7 @@ export default function NewExperiment() {
           name: o.name,
           metric: o.metric,
           direction: o.direction,
-          kind: METRICS.find((m) => m.value === o.metric)?.numeric
-            ? "numeric"
-            : "rating",
+          kind: METRICS.find((m) => m.value === o.metric)?.numeric ? "numeric" : "rating",
           is_primary: o.is_primary,
         });
       }
@@ -138,146 +142,163 @@ export default function NewExperiment() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Design an experiment</h1>
-      <p className="mt-0 text-muted">Ask one clear question and change one thing.</p>
+    <>
+      <TopBar
+        breadcrumb={["Lab", "New experiment"]}
+        title={title.trim() || "New experiment"}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => submit(false)} disabled={submitting}>
+              Save draft
+            </Button>
+            <Button variant="primary" size="sm" iconRight={ArrowRight} onClick={() => submit(true)} disabled={submitting}>
+              {submitting ? "Saving…" : "Start logging"}
+            </Button>
+          </>
+        }
+      />
 
-      <SafetyNotice />
-
-      <Card className="mb-4">
-        <Field label="Title">
-          <input
-            className={inputClass}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Higher-protein breakfast vs afternoon hunger"
-          />
-        </Field>
-        <Field label="Question">
-          <input
-            className={inputClass}
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Does a higher-protein breakfast reduce my afternoon hunger?"
-          />
-        </Field>
-        <Field label="Hypothesis (optional)">
-          <textarea
-            className={`${inputClass} min-h-[60px]`}
-            value={hypothesis}
-            onChange={(e) => setHypothesis(e.target.value)}
-          />
-        </Field>
-      </Card>
-
-      <Card className="mb-4">
-        <h3 className="mt-0 font-semibold">Windows</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Baseline start">
-            <input type="date" className={inputClass} value={baselineStart} onChange={(e) => setBaselineStart(e.target.value)} />
-          </Field>
-          <Field label="Baseline end">
-            <input type="date" className={inputClass} value={baselineEnd} onChange={(e) => setBaselineEnd(e.target.value)} />
-          </Field>
-          <Field label="Intervention start">
-            <input type="date" className={inputClass} value={intvStart} onChange={(e) => setIntvStart(e.target.value)} />
-          </Field>
-          <Field label="Intervention end" hint={intvDays ? `${intvDays} days` : undefined}>
-            <input type="date" className={inputClass} value={intvEnd} onChange={(e) => setIntvEnd(e.target.value)} />
-          </Field>
-        </div>
-
-        <label className="mt-1 flex items-center gap-2 text-[13px] text-muted">
-          <input
-            type="checkbox"
-            checked={useWashout}
-            onChange={(e) => setUseWashout(e.target.checked)}
-          />
-          Add a washout period between baseline and intervention
-        </label>
-        {useWashout && (
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <Field label="Washout start">
-              <input type="date" className={inputClass} value={washoutStart} onChange={(e) => setWashoutStart(e.target.value)} />
-            </Field>
-            <Field label="Washout end">
-              <input type="date" className={inputClass} value={washoutEnd} onChange={(e) => setWashoutEnd(e.target.value)} />
-            </Field>
-          </div>
-        )}
-      </Card>
-
-      <Card className="mb-4">
-        <h3 className="mt-0 font-semibold">Intervention</h3>
-        <Field label="Name">
-          <input className={inputClass} value={intvName} onChange={(e) => setIntvName(e.target.value)} placeholder="40g protein breakfast" />
-        </Field>
-        <Field label="Rule" hint="What exactly will you change? Keep it to one variable.">
-          <textarea className={`${inputClass} min-h-[60px]`} value={intvRule} onChange={(e) => setIntvRule(e.target.value)} placeholder="Eat at least 40g of protein within an hour of waking." />
-        </Field>
-      </Card>
-
-      <Card className="mb-4">
-        <div className="flex items-center justify-between">
-          <h3 className="m-0 font-semibold">Outcomes</h3>
-          <Button variant="ghost" onClick={addOutcome}>+ Add</Button>
-        </div>
-        {outcomes.map((o, i) => (
-          <div
-            key={i}
-            className="mt-3 grid grid-cols-[1.4fr_1fr_1fr_auto_auto] items-center gap-2"
-          >
-            <input className={inputClass} value={o.name} placeholder="Outcome name" onChange={(e) => updateOutcome(i, { name: e.target.value })} />
-            <select className={inputClass} value={o.metric} onChange={(e) => updateOutcome(i, { metric: e.target.value as Metric })}>
-              {METRICS.map((m) => (
-                <option key={m.value} value={m.value}>{m.label}</option>
-              ))}
-            </select>
-            <select className={inputClass} value={o.direction} onChange={(e) => updateOutcome(i, { direction: e.target.value as OutcomeDirection })}>
-              <option value="higher_better">Higher better</option>
-              <option value="lower_better">Lower better</option>
-              <option value="target_range">Target range</option>
-            </select>
-            <label className="flex items-center gap-1 text-xs text-muted">
-              <input type="radio" name="primary" checked={o.is_primary} onChange={() => setPrimary(i)} />
-              primary
-            </label>
-            {outcomes.length > 1 && (
-              <button onClick={() => removeOutcome(i)} className="cursor-pointer border-none bg-transparent text-bad">×</button>
-            )}
-          </div>
-        ))}
-      </Card>
-
-      {warnings && warnings.length > 0 && (
-        <Card tone="warn" className="mb-4">
-          <h3 className="mt-0 font-semibold text-warn">Heads up</h3>
-          {warnings.map((w: SafetyWarning) => (
-            <div key={w.code} className="mb-2 flex items-start gap-2">
-              <Badge tone={w.severity === "high" ? "bad" : "warn"}>{w.severity}</Badge>
-              <span className="text-sm">{w.message}</span>
+      <div
+        className="grid flex-1 items-start gap-6 overflow-y-auto px-8 py-6 max-lg:grid-cols-1"
+        style={{ gridTemplateColumns: "1fr 360px" }}
+      >
+        {/* LEFT — protocol form */}
+        <div className="flex flex-col gap-4">
+          <Card eyebrow="01 · The question" title="What are you trying to learn?" actions={<span className="label">Be specific. Single variable.</span>}>
+            <div className="flex flex-col gap-4">
+              <Field label="Title" required>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Higher-protein breakfast vs afternoon hunger" />
+              </Field>
+              <Field label="Question" required hint="one sentence">
+                <Input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Does a higher-protein breakfast reduce my afternoon hunger?" />
+              </Field>
+              <Field label="Hypothesis" hint="predicted direction">
+                <Textarea rows={2} value={hypothesis} onChange={(e) => setHypothesis(e.target.value)} placeholder="More protein at breakfast lowers my 2–5pm hunger." />
+              </Field>
             </div>
-          ))}
-          <p className="m-0 text-xs text-muted">
-            These are advisory — you can still proceed.
-          </p>
-        </Card>
-      )}
+          </Card>
 
-      {error && (
-        <div className="mb-4">
-          <ErrorState message={error} />
+          <Card eyebrow="02 · Schedule" title="Baseline → intervention">
+            <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Baseline start"><Input type="date" value={baselineStart} onChange={(e) => setBaselineStart(e.target.value)} /></Field>
+                <Field label="Baseline end" hint={baselineDays ? `${baselineDays}d` : undefined}><Input type="date" value={baselineEnd} onChange={(e) => setBaselineEnd(e.target.value)} /></Field>
+                <Field label="Intervention start"><Input type="date" value={intvStart} onChange={(e) => setIntvStart(e.target.value)} /></Field>
+                <Field label="Intervention end" hint={intvDays ? `${intvDays}d` : undefined}><Input type="date" value={intvEnd} onChange={(e) => setIntvEnd(e.target.value)} /></Field>
+              </div>
+              <label className="flex items-center gap-2 text-[12px] text-ink-3">
+                <input type="checkbox" checked={useWashout} onChange={(e) => setUseWashout(e.target.checked)} />
+                Add a washout period between baseline and intervention
+              </label>
+              {useWashout && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Washout start"><Input type="date" value={washoutStart} onChange={(e) => setWashoutStart(e.target.value)} /></Field>
+                  <Field label="Washout end"><Input type="date" value={washoutEnd} onChange={(e) => setWashoutEnd(e.target.value)} /></Field>
+                </div>
+              )}
+              <Field label="Intervention" hint="name">
+                <Input value={intvName} onChange={(e) => setIntvName(e.target.value)} placeholder="40g protein breakfast" />
+              </Field>
+              <Field label="Intervention rule" hint="what you change, exactly">
+                <Textarea rows={2} value={intvRule} onChange={(e) => setIntvRule(e.target.value)} placeholder="Eat at least 40g of protein within an hour of waking." />
+              </Field>
+            </div>
+          </Card>
+
+          <Card eyebrow="03 · Outcomes" title="What are you measuring?" actions={<Button variant="ghost" size="sm" icon={Plus} onClick={addOutcome}>Add outcome</Button>}>
+            <div className="flex flex-col gap-2">
+              {outcomes.map((o, i) => (
+                <div key={i} className="grid items-center gap-2" style={{ gridTemplateColumns: "1.4fr 1fr 1fr 80px 32px" }}>
+                  <Input value={o.name} placeholder="Outcome name" onChange={(e) => updateOutcome(i, { name: e.target.value })} />
+                  <Select value={o.metric} onChange={(e) => updateOutcome(i, { metric: e.target.value as Metric })}>
+                    {METRICS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+                  </Select>
+                  <Select value={o.direction} onChange={(e) => updateOutcome(i, { direction: e.target.value as OutcomeDirection })}>
+                    <option value="higher_better">↑ higher</option>
+                    <option value="lower_better">↓ lower</option>
+                    <option value="target_range">◇ target</option>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => setPrimary(i)}
+                    className="flex h-9 items-center justify-center rounded-sm border border-line text-[11px]"
+                    aria-pressed={o.is_primary}
+                  >
+                    {o.is_primary ? <Badge tone="signal" size="sm">Primary</Badge> : <span className="text-ink-4">set</span>}
+                  </button>
+                  {outcomes.length > 1 ? (
+                    <Button variant="ghost" size="sm" icon={Trash2} aria-label="Remove outcome" onClick={() => removeOutcome(i)} />
+                  ) : <span />}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {error && <p className="m-0 text-[13px] text-worsened">{error}</p>}
         </div>
-      )}
 
-      <div className="flex gap-2.5">
-        <Button onClick={() => submit(true)} disabled={submitting}>
-          {submitting ? "Saving…" : "Create & start"}
-        </Button>
-        <Button variant="ghost" onClick={() => submit(false)} disabled={submitting}>
-          Save as draft
-        </Button>
+        {/* RIGHT — advisory + summary */}
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-0">
+          <SafetyAdvisory warnings={warnings ?? []} />
+          <Card eyebrow="Summary" title="At a glance">
+            <KV
+              rows={[
+                ["Baseline", baselineDays ? `${baselineDays} days` : "—", { mono: true }],
+                ["Intervention", intvDays ? `${intvDays} days` : "—", { mono: true }],
+                ["Outcomes", String(outcomes.filter((o) => o.name.trim()).length), { mono: true }],
+                ["Time per log", "< 1 min"],
+                ["Min. for analysis", "≥ 3 days / window", { mono: true }],
+              ]}
+            />
+          </Card>
+        </aside>
       </div>
-    </div>
+    </>
+  );
+}
+
+function SafetyAdvisory({ warnings }: { warnings: SafetyWarning[] }) {
+  const clean = warnings.length === 0;
+  return (
+    <Card
+      eyebrow="Advisory"
+      title="Safety checks"
+      actions={<span className="text-[11px] text-ink-4">{clean ? "all clear" : `${warnings.length} flag${warnings.length === 1 ? "" : "s"}`}</span>}
+    >
+      <ul className="m-0 flex flex-col gap-0 p-0">
+        {clean ? (
+          <li className="flex items-start gap-3 py-2.5">
+            <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full border border-improved-line bg-improved-soft text-improved" aria-hidden>
+              <Check className="size-2.5" />
+            </span>
+            <div className="flex-1 text-[12px] text-ink-2">
+              Nothing flagged. Keep it to one clear change and a window long enough to trust.
+            </div>
+          </li>
+        ) : (
+          warnings.map((w, i) => (
+            <li key={w.code} className={`flex items-start gap-3 py-2.5 ${i < warnings.length - 1 ? "border-b border-line" : ""}`}>
+              <span
+                className={`flex size-[18px] shrink-0 items-center justify-center rounded-full border ${
+                  w.severity === "high"
+                    ? "border-worsened-line bg-worsened-soft text-worsened"
+                    : "border-info-line bg-info-soft text-info"
+                }`}
+                aria-hidden
+              >
+                <Info className="size-2.5" />
+              </span>
+              <div className="flex-1">
+                <div className="text-[12px] font-medium text-ink capitalize">{w.code.replace(/_/g, " ")}</div>
+                <div className="mt-0.5 text-[11px] leading-[1.5] text-ink-3">{w.message}</div>
+              </div>
+            </li>
+          ))
+        )}
+      </ul>
+      <p className="mt-3 rounded-sm border border-line bg-surface-3 px-3 py-2.5 text-[11px] leading-[1.5] text-ink-3">
+        Advisories are heuristics, not medical advice. Consult a clinician for anything related to a diagnosed condition.
+      </p>
+    </Card>
   );
 }

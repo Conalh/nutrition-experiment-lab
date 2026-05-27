@@ -110,6 +110,8 @@ async function seed(request: APIRequestContext): Promise<string> {
 async function signUp(page: Page): Promise<string> {
   const email = `shots_${Date.now()}@example.com`;
   await page.goto("/login");
+  // Capture the editorial sign-in before authenticating.
+  await page.screenshot({ path: `${OUT}/login.png`, fullPage: true });
   await page.getByRole("button", { name: "Create one" }).click();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("password123");

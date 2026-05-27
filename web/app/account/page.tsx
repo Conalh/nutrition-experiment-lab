@@ -2,27 +2,37 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Download, Lock, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { Button, Card, inputClass } from "@/components/ui";
+import { TopBar } from "@/components/nav/top-bar";
+import { Card } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+const PRINCIPLES: [string, string][] = [
+  ["No selling, no ads, no third-party analytics.", "principle"],
+  ["We make no medical claims. Not a diagnostic tool.", "principle"],
+  ["You can export everything as JSON any time.", "right"],
+  ["You can delete everything. No soft-delete, no backup.", "right"],
+];
 
 export default function AccountPage() {
   const qc = useQueryClient();
+  const { data: me } = useQuery({ queryKey: ["me"], queryFn: api.me, retry: false });
   const [confirm, setConfirm] = useState("");
   const [deleted, setDeleted] = useState<Record<string, number> | null>(null);
 
   const exportData = useMutation({
     mutationFn: api.exportAccount,
     onSuccess: (data) => {
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `nutrition-lab-export-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`;
+      a.download = `nutrition-lab-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     },
@@ -38,55 +48,74 @@ export default function AccountPage() {
   });
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Account</h1>
-      <p className="mt-0 text-muted">
-        Your data, your controls. See the{" "}
-        <Link href="/privacy" className="text-accent">
-          privacy page
-        </Link>{" "}
-        for details.
-      </p>
+    <>
+      <TopBar breadcrumb={["Settings"]} title="Account & privacy" eyebrow="Quiet utility" />
 
-      <Card className="mb-4">
-        <h3 className="mt-0 font-semibold">Export your data</h3>
-        <p className="text-sm text-muted">
-          Download everything you&apos;ve entered as a single JSON file.
-        </p>
-        <Button onClick={() => exportData.mutate()} disabled={exportData.isPending}>
-          {exportData.isPending ? "Preparing…" : "Export JSON"}
-        </Button>
-        {exportData.error && <p className="text-bad">Export failed.</p>}
-      </Card>
+      <div className="mx-auto flex w-full max-w-[760px] flex-1 flex-col gap-5 overflow-y-auto px-8 py-6">
+        <Card eyebrow="Account" title="Identity">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Display name">
+              <Input value={me?.display_name ?? ""} readOnly />
+            </Field>
+            <Field label="Email">
+              <Input value={me?.email ?? ""} readOnly suffix={<Badge tone="improved" size="sm">signed in</Badge>} />
+            </Field>
+          </div>
+        </Card>
 
-      <Card tone="danger">
-        <h3 className="mt-0 font-semibold text-bad">Delete all data</h3>
-        <p className="text-sm text-muted">
-          Permanently deletes every experiment, log, meal, and confounder. This
-          cannot be undone. Type <strong>DELETE</strong> to confirm.
-        </p>
-        <div className="flex items-center gap-2.5">
-          <input
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            placeholder="DELETE"
-            className={`${inputClass} max-w-[160px]`}
-          />
-          <Button
-            variant="danger"
-            disabled={confirm !== "DELETE" || wipe.isPending}
-            onClick={() => wipe.mutate()}
-          >
-            {wipe.isPending ? "Deleting…" : "Delete everything"}
-          </Button>
-        </div>
-        {deleted && (
-          <p className="text-sm text-accent">
-            Deleted {Object.values(deleted).reduce((a, b) => a + b, 0)} rows.
-            Your account is now empty.
+        <Card eyebrow="Privacy" title="Where your data lives" actions={<Badge tone="ghost" icon={Lock}>Private</Badge>}>
+          <p className="mb-4 mt-0 font-display text-[18px] italic leading-[1.45] text-ink-2">
+            Your notebook is yours. We store the minimum needed to run your
+            experiments — and treat meals, weight, and symptoms as sensitive
+            health data.
           </p>
-        )}
-      </Card>
-    </div>
+          <ul className="m-0 list-none border-t border-line p-0">
+            {PRINCIPLES.map(([text, kind]) => (
+              <li key={text} className="flex items-start gap-3 border-b border-line py-2.5">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-improved" />
+                <span className="flex-1 text-[13px] text-ink">{text}</span>
+                <span className="label shrink-0">{kind}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 text-[12px] text-ink-3">
+            Full detail on the <Link href="/privacy" className="text-signal-ink">privacy page</Link>.
+          </p>
+        </Card>
+
+        <Card eyebrow="Data" title="Export">
+          <div className="flex items-center justify-between gap-6">
+            <p className="m-0 max-w-[460px] text-[13px] leading-[1.55] text-ink-2">
+              Download everything you&apos;ve entered — experiments, logs, meals,
+              confounders, and analysis snapshots — as a single JSON file.
+              Reports export to PDF from each experiment.
+            </p>
+            <Button variant="secondary" size="md" icon={Download} onClick={() => exportData.mutate()} disabled={exportData.isPending}>
+              {exportData.isPending ? "Preparing…" : "Export JSON"}
+            </Button>
+          </div>
+          {exportData.error && <p className="mt-2 text-[12px] text-worsened">Export failed.</p>}
+        </Card>
+
+        <Card eyebrow="Danger zone" title="Delete all data" className="border-worsened-line">
+          <p className="m-0 mb-4 text-[13px] leading-[1.55] text-ink-2">
+            Permanently removes every experiment, log, confounder, and meal.{" "}
+            <strong className="font-medium text-ink">This cannot be undone.</strong>{" "}
+            Type <span className="font-mono text-ink">DELETE</span> to confirm.
+          </p>
+          <div className="flex items-center gap-2.5">
+            <Input value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="DELETE" className="max-w-[180px]" />
+            <Button variant="danger" size="md" icon={Trash2} disabled={confirm !== "DELETE" || wipe.isPending} onClick={() => wipe.mutate()}>
+              {wipe.isPending ? "Deleting…" : "Delete everything"}
+            </Button>
+          </div>
+          {deleted && (
+            <p className="mt-3 text-[13px] text-improved">
+              Deleted {Object.values(deleted).reduce((a, b) => a + b, 0)} rows. Your account is now empty.
+            </p>
+          )}
+        </Card>
+      </div>
+    </>
   );
 }
