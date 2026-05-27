@@ -22,9 +22,9 @@ flowchart LR
     Engine["Analysis engine<br/>adherence · comparison<br/>confounders · confidence"] --> Dashboard["Dashboard<br/>(Next.js)"]
     Engine --> PDF["Report<br/>+ PDF export"]
 
-    classDef box fill:#1e293b,stroke:#334155,color:#e2e8f0
-    classDef store fill:#0f172a,stroke:#1e293b,color:#e2e8f0,stroke-width:2px
-    classDef out fill:#0c4a6e,stroke:#0369a1,color:#e0f2fe
+    classDef box fill:#14171c,stroke:#2a313d,color:#ecebe5
+    classDef store fill:#0f1115,stroke:#2a313d,color:#ecebe5,stroke-width:2px
+    classDef out fill:#2a2117,stroke:#4a3a22,color:#f4d495
     class Builder,Log,Meals box
     class DB store
     class Engine,Dashboard,PDF out
@@ -176,10 +176,10 @@ left `nav` rail). Screens share the same chrome:
 - **`/`** — Dashboard: active/draft experiments and the completed library.
 - **`/experiments/new`** — Builder: question, hypothesis, windows (with an optional washout period), intervention, and outcomes, with **live safety warnings** as you type.
 - **`/log`** — Daily log: fast 1–5 rating buttons, adherence chips, weight, notes, and meals; pre-loads any existing entry for the date.
-- **`/experiments/[id]`** — Detail: protocol, lifecycle actions, **Run analysis** with confidence/adherence badges, baseline-vs-intervention bar charts, confounder flags, recommendation, and an add-confounder form.
-- **`/reports/[id]`** — Report: the shareable readout — outcomes, what changed / didn't, confounders, meal examples, recommendation, caveats, and a **Download PDF** button.
+- **`/experiments/[id]`** — Detail: protocol, lifecycle actions, **Run analysis** with confidence/adherence meters, baseline-vs-intervention comparison bars, confounder flags + add form, the plain-language finding & recommendation, plus an inline protocol editor (edit the question, add/remove interventions & outcomes, set the primary, abandon, or delete the experiment).
+- **`/reports/[id]`** — Report: a light-theme, print-ready readout — outcomes, what changed / didn't, confounders, meal examples, recommendation, caveats, and a **Download PDF** button.
 
-Plus an **`/account`** page (export your data as JSON, download the report PDF, or permanently delete everything) and a **`/privacy`** page describing the non-clinical positioning.
+Plus an **`/account`** page (export everything as JSON or permanently delete all your data) and a **`/privacy`** page describing the non-clinical positioning.
 
 Grouped controls (rating and adherence buttons) use a `role="group"` with
 per-button `aria-label`s rather than a wrapping `<label>`, so screen readers
@@ -191,18 +191,21 @@ Mounted in [`src/nutrition_lab/api.py`](src/nutrition_lab/api.py); browse it at 
 
 ```
 Auth          POST /api/auth/{signup|login|logout} · GET /api/auth/me
-Experiments   GET/POST /api/experiments · GET/PATCH /api/experiments/{id}
+Experiments   GET/POST /api/experiments · GET/PATCH/DELETE /api/experiments/{id}
               POST /api/experiments/{id}/{start|pause|resume|complete|abandon}
               POST /api/experiments/check-safety
-Protocol      POST /api/experiments/{id}/interventions · PATCH /api/interventions/{id}
-              POST /api/experiments/{id}/outcomes      · PATCH /api/outcomes/{id}
+Protocol      POST /api/experiments/{id}/interventions · PATCH/DELETE /api/interventions/{id}
+              POST /api/experiments/{id}/outcomes      · PATCH/DELETE /api/outcomes/{id}
 Logging       GET/POST /api/daily-log · PATCH /api/daily-log/{id}
               POST /api/daily-log/{id}/meals · PATCH /api/meals/{id}
               GET/POST /api/experiments/{id}/confounders
 Analysis      POST /api/experiments/{id}/analyze · GET /api/experiments/{id}/analysis
               GET /api/experiments/{id}/report · GET /api/experiments/{id}/report.pdf
-Account       GET /api/account/export · DELETE /api/account/data
+Account       GET /api/account/export · DELETE /api/account/data · POST /api/demo
 ```
+
+Every per-user route is scoped to the authenticated account; accessing or
+mutating another user's row by id returns 404 (regression-tested).
 
 ## Tests
 
@@ -213,7 +216,7 @@ pytest -q                    # runs against nutrition_lab_test
 cd web && npm run e2e        # Playwright: boots API + web, drives the loop
 ```
 
-40 backend tests covering invalid date windows and illegal lifecycle transitions, the single-primary-outcome rule, the daily-log upsert (one row per experiment+date), meals and confounders, the safety guardrails, the analysis engine across clean / messy / missing / confounded experiments, snapshot persistence, the "no p-values" guarantee, report generation, PDF export, account export, and the data-wipe (which keeps the user identity row). A **Playwright e2e** drives a real browser through the whole loop (dashboard → builder → log → analyze → report) against an isolated stack. `ruff` and `mypy` run clean; the frontend passes `tsc --noEmit`. All of it runs in [GitHub Actions](.github/workflows/tests.yml) on every push — backend on Python 3.11 & 3.12, frontend typecheck, and the e2e.
+51 backend tests covering invalid date windows and illegal lifecycle transitions, the single-primary-outcome rule, the daily-log upsert (one row per experiment+date), meals and confounders, the safety guardrails, the analysis engine across clean / messy / missing / confounded experiments, snapshot persistence, the "no p-values" guarantee, report generation, PDF export, account export and data-wipe, signup/login/logout/session revocation, and **per-user isolation (cross-tenant IDOR regression tests)**. A **Playwright e2e** drives a real browser through the whole loop (sign up → build → log → analyze → report → delete) against an isolated stack. `ruff` and `mypy` run clean; the frontend passes `tsc --noEmit`. All of it runs in [GitHub Actions](.github/workflows/tests.yml) on every push — backend on Python 3.11 & 3.12, frontend typecheck, and the e2e.
 
 ## Safety & privacy
 
@@ -227,6 +230,8 @@ nutrition-experiment-lab/
 │   ├── api.py            FastAPI app factory
 │   ├── db.py             Postgres schema, connection helper, migrations
 │   ├── models.py         Pydantic schemas + enums
+│   ├── auth.py           bcrypt + signed/revocable session cookie
+│   ├── users.py          account creation, credentials, session epoch
 │   ├── experiments.py    CRUD + lifecycle + validation
 │   ├── logging.py        daily logs, meals, confounders
 │   ├── analysis.py       the comparison engine
@@ -234,21 +239,27 @@ nutrition-experiment-lab/
 │   ├── report.py         report builder + reportlab PDF
 │   ├── account.py        data export + deletion
 │   ├── demo.py           seeds a worked example
-│   └── routes/           experiments · interventions · logging · analysis · account
+│   └── routes/           auth · experiments · interventions · logging · analysis · account · demo
 ├── tests/                pytest suite (against nutrition_lab_test)
 ├── web/                  Next.js 16 + Tailwind 4 + TanStack Query
-│   ├── app/              dashboard · builder · log · detail · report · account · privacy
-│   ├── components/       cards, charts, confounder list, safety notice, states, nav
+│   ├── app/              login · dashboard · builder · log · detail · report · account · privacy
+│   ├── components/       ui/ primitives · viz/ charts · brand/ · nav/ · shell · auth-guard
+│   ├── lib/              api.ts (typed client) · cn.ts
 │   ├── e2e/              Playwright core-loop test
-│   └── lib/api.ts        typed client
-└── PLAN.md               product thesis + phased build
+│   └── screenshots/      Playwright capture → docs/screenshots
+└── PLAN.md · ROADMAP.md  product thesis + phased build / what's next
 ```
 
 ## Status
 
-V1 complete — all five phases of [PLAN.md](PLAN.md) shipped: experiment spine, daily logging, analysis engine, frontend, and export/safety polish. Now **multi-user** with email/password auth (bcrypt + a signed HttpOnly session cookie); every record is scoped to its owner and isolation is regression-tested.
+V1 complete — all five phases of [PLAN.md](PLAN.md) shipped: experiment spine, daily logging, analysis engine, frontend, and export/safety polish. Since then:
 
-Deliberately **out of scope**: barcode scanning, a full nutrient database, wearable integrations, AI meal generation, diet plans, and any medical-condition protocols.
+- **Multi-user auth** — email/password (bcrypt) + a signed HttpOnly **revocable** session cookie (per-user epoch, bumped on logout); every record is owner-scoped and isolation is regression-tested.
+- **Security pass** — a multi-agent review found and fixed a cross-tenant IDOR and the non-revocable-logout gap; both have regression tests.
+- **Full CRUD** — create, edit, and delete experiments / interventions / outcomes; lifecycle (start → pause → resume → complete / abandon).
+- **Visual redesign** — a Tailwind v4 token system, editorial typography, and a component/viz library (see screenshots above).
+
+Deliberately **out of scope**: barcode scanning, a full nutrient database, wearable integrations, AI meal generation, diet plans, and any medical-condition protocols. Hosting is **deferred for cost** — the repo + CI are the artifact (see [ROADMAP.md](ROADMAP.md)).
 
 ## License
 
