@@ -26,9 +26,17 @@ web/.turbo/
 web/next-env.d.ts
 npm-debug.log*
 
+# Playwright
+web/test-results/
+web/playwright-report/
+web/blob-report/
+web/.playwright/
+web/playwright/.cache/
+
 # Editor / tool dirs
 .qodo/
 .idea/
 .vscode/
 *.swp
 .DS_Store
+web/*.tsbuildinfo
