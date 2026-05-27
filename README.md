@@ -238,7 +238,6 @@ nutrition-experiment-lab/
 │   ├── app/              dashboard · builder · log · detail · report · account · privacy
 │   ├── components/       cards, charts, confounder list, safety notice, states, nav
 │   ├── e2e/              Playwright core-loop test
-│   ├── screenshots/      Playwright capture (generates docs/screenshots)
 │   └── lib/api.ts        typed client
 └── PLAN.md               product thesis + phased build
 ```
