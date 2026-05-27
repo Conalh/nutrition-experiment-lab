@@ -74,3 +74,33 @@ def test_users_are_isolated(conn):
     # Bob cannot fetch Alice's experiment by id.
     alice_exp_id = alice.get("/api/experiments").json()[0]["id"]
     assert bob.get(f"/api/experiments/{alice_exp_id}").status_code == 404
+
+
+def test_cannot_modify_another_users_intervention_or_outcome(conn):
+    """IDOR regression: PATCH on a sibling's intervention/outcome by id must
+    not read or write across tenants."""
+    alice = _fresh_client()
+    alice.post("/api/auth/signup", json={"email": "alice2@example.com", "password": "password123"})
+    exp = alice.post("/api/experiments", json={"title": "A", "question": "Q?"}).json()
+    iv = alice.post(
+        f"/api/experiments/{exp['id']}/interventions",
+        json={"name": "secret rule", "rule_text": "private"},
+    ).json()
+    oc = alice.post(
+        f"/api/experiments/{exp['id']}/outcomes",
+        json={"name": "hunger", "metric": "hunger", "is_primary": True},
+    ).json()
+
+    bob = _fresh_client()
+    bob.post("/api/auth/signup", json={"email": "bob2@example.com", "password": "password123"})
+
+    # Cross-tenant write attempts → 404, not 200.
+    assert bob.patch(f"/api/interventions/{iv['id']}", json={"name": "hacked"}).status_code == 404
+    assert bob.patch(f"/api/outcomes/{oc['id']}", json={"name": "hacked"}).status_code == 404
+    # Empty-body PATCH must not leak the row either.
+    assert bob.patch(f"/api/outcomes/{oc['id']}", json={}).status_code == 404
+
+    # Alice's data is untouched.
+    detail = alice.get(f"/api/experiments/{exp['id']}").json()
+    assert detail["interventions"][0]["name"] == "secret rule"
+    assert detail["outcomes"][0]["name"] == "hunger"

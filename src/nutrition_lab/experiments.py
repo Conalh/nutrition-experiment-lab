@@ -320,8 +320,18 @@ def list_interventions(conn: "DictConn", experiment_id: str) -> list[Interventio
 
 
 def update_intervention(
-    conn: "DictConn", intervention_id: str, data: InterventionUpdate
+    conn: "DictConn", user_id: str, intervention_id: str, data: InterventionUpdate
 ) -> Intervention:
+    # Ownership gate: the intervention must belong to an experiment owned by
+    # this user. Treat "not yours" as 404 so we don't leak which ids exist.
+    owns = conn.execute(
+        "SELECT 1 FROM intervention i JOIN experiment e ON i.experiment_id = e.id "
+        "WHERE i.id = %s AND e.user_id = %s",
+        (intervention_id, user_id),
+    ).fetchone()
+    if owns is None:
+        raise NotFoundError(f"Intervention {intervention_id} not found.")
+
     fields = data.model_dump(exclude_unset=True)
     if "category" in fields and fields["category"] is not None:
         fields["category"] = fields["category"].value
@@ -336,9 +346,7 @@ def update_intervention(
             list(fields.values()) + [intervention_id],
         ).fetchone()
         conn.commit()
-    if row is None:
-        raise NotFoundError(f"Intervention {intervention_id} not found.")
-    return Intervention(**row)
+    return Intervention(**require(row))
 
 
 # ─── Outcome definitions ─────────────────────────────────────────────
@@ -391,8 +399,18 @@ def list_outcomes(conn: "DictConn", experiment_id: str) -> list[OutcomeDefinitio
 
 
 def update_outcome(
-    conn: "DictConn", outcome_id: str, data: OutcomeUpdate
+    conn: "DictConn", user_id: str, outcome_id: str, data: OutcomeUpdate
 ) -> OutcomeDefinition:
+    # Ownership gate via the parent experiment's owner (404 if not yours).
+    current = conn.execute(
+        "SELECT o.experiment_id FROM outcome_definition o "
+        "JOIN experiment e ON o.experiment_id = e.id "
+        "WHERE o.id = %s AND e.user_id = %s",
+        (outcome_id, user_id),
+    ).fetchone()
+    if current is None:
+        raise NotFoundError(f"Outcome {outcome_id} not found.")
+
     fields = data.model_dump(exclude_unset=True)
     for enum_field in ("kind", "direction", "metric"):
         if enum_field in fields and fields[enum_field] is not None:
@@ -401,15 +419,8 @@ def update_outcome(
         row = conn.execute(
             "SELECT * FROM outcome_definition WHERE id = %s", (outcome_id,)
         ).fetchone()
-        if row is None:
-            raise NotFoundError(f"Outcome {outcome_id} not found.")
-        return OutcomeDefinition(**row)
+        return OutcomeDefinition(**require(row))
 
-    current = conn.execute(
-        "SELECT experiment_id FROM outcome_definition WHERE id = %s", (outcome_id,)
-    ).fetchone()
-    if current is None:
-        raise NotFoundError(f"Outcome {outcome_id} not found.")
     if fields.get("is_primary"):
         conn.execute(
             "UPDATE outcome_definition SET is_primary = FALSE "

@@ -43,7 +43,7 @@ def update_intervention(
     user_id: str = UserDep,
 ):
     try:
-        return svc.update_intervention(conn, intervention_id, data)
+        return svc.update_intervention(conn, user_id, intervention_id, data)
     except Exception as exc:
         raise to_http(exc)
 
@@ -73,6 +73,6 @@ def update_outcome(
     user_id: str = UserDep,
 ):
     try:
-        return svc.update_outcome(conn, outcome_id, data)
+        return svc.update_outcome(conn, user_id, outcome_id, data)
     except Exception as exc:
         raise to_http(exc)
