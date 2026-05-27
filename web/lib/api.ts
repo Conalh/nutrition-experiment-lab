@@ -237,6 +237,11 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   logout: () => request("/api/auth/logout", { method: "POST" }),
+  changePassword: (current_password: string, new_password: string) =>
+    request("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ current_password, new_password }),
+    }),
   listExperiments: () => request<Experiment[]>("/api/experiments"),
   getExperiment: (id: string) =>
     request<ExperimentDetail>(`/api/experiments/${id}`),

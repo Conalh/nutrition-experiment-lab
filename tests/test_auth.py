@@ -64,6 +64,30 @@ def test_logout_revokes_outstanding_tokens(conn):
     assert stolen.get("/api/experiments").status_code == 401
 
 
+def test_change_password(conn):
+    c = _fresh_client()
+    c.post("/api/auth/signup", json={"email": "pw@example.com", "password": "password123"})
+    old_token = c.cookies.get("nl_session")
+
+    # Wrong current password / too-short new password → 400.
+    assert c.post("/api/auth/change-password", json={"current_password": "nope", "new_password": "newpassword1"}).status_code == 400
+    assert c.post("/api/auth/change-password", json={"current_password": "password123", "new_password": "short"}).status_code == 400
+
+    # Successful change keeps this session alive (cookie re-issued)…
+    assert c.post("/api/auth/change-password", json={"current_password": "password123", "new_password": "newpassword1"}).status_code == 200
+    assert c.get("/api/auth/me").status_code == 200
+
+    # …revokes the pre-change token…
+    stolen = _fresh_client()
+    stolen.cookies.set("nl_session", old_token)
+    assert stolen.get("/api/auth/me").status_code == 401
+
+    # …and the new password is what works now.
+    fresh = _fresh_client()
+    assert fresh.post("/api/auth/login", json={"email": "pw@example.com", "password": "password123"}).status_code == 401
+    assert fresh.post("/api/auth/login", json={"email": "pw@example.com", "password": "newpassword1"}).status_code == 200
+
+
 def test_duplicate_email_rejected(conn):
     c = _fresh_client()
     body = {"email": "dup@example.com", "password": "password123"}

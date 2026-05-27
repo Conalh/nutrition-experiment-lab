@@ -38,7 +38,7 @@ Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgre
 
 A calm, editorial instrument — Instrument Serif headlines, mono numerics, a single amber "signal" accent, lines over shadows.
 
-![Sign in](docs/screenshots/login.png)
+![A tour of the app](docs/demo.gif)
 
 | Dashboard | First-run onboarding |
 | --- | --- |
@@ -48,7 +48,7 @@ A calm, editorial instrument — Instrument Serif headlines, mono numerics, a si
 | **Experiment builder** | **Report (print theme)** |
 | ![Builder](docs/screenshots/builder.png) | ![Report](docs/screenshots/report.png) |
 
-> Captured with Playwright against a seeded demo — regenerate any time with `npm run screenshots` (from `web/`).
+> Captured with Playwright against a seeded demo — regenerate with `npm run screenshots` (from `web/`), then `python scripts/make_demo_gif.py` for the tour above.
 
 ## Why this exists
 

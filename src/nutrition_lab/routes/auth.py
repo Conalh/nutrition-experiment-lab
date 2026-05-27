@@ -12,7 +12,12 @@ from ..auth import (
     read_session,
 )
 from ..db import DictConn
-from ..models import LoginRequest, SignupRequest, UserPublic
+from ..models import (
+    ChangePasswordRequest,
+    LoginRequest,
+    SignupRequest,
+    UserPublic,
+)
 from ..users import AuthError
 from .deps import ConnDep, UserDep
 
@@ -66,6 +71,24 @@ def logout(request: Request, response: Response, conn: DictConn = ConnDep) -> di
     response.delete_cookie(
         COOKIE_NAME, path="/", httponly=True, samesite="lax", secure=COOKIE_SECURE
     )
+    return {"ok": True}
+
+
+@router.post("/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    response: Response,
+    conn: DictConn = ConnDep,
+    user_id: str = UserDep,
+) -> dict[str, bool]:
+    try:
+        users_svc.change_password(conn, user_id, data.current_password, data.new_password)
+    except AuthError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    # Changing the password revokes every other session; re-issue a fresh
+    # cookie so the user who just changed it stays signed in here.
+    users_svc.revoke_sessions(conn, user_id)
+    _set_session(response, user_id, users_svc.current_epoch(conn, user_id))
     return {"ok": True}
 
 

@@ -106,6 +106,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class UserPublic(BaseModel):
     id: str
     email: str

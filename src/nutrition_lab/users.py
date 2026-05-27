@@ -67,6 +67,27 @@ def current_epoch(conn: DictConn, user_id: str) -> int:
     return int(row["session_epoch"]) if row else 0
 
 
+def change_password(
+    conn: DictConn, user_id: str, current: str, new: str
+) -> None:
+    """Set a new password after verifying the current one. Caller should
+    revoke other sessions afterward."""
+    row = conn.execute(
+        "SELECT password_hash FROM app_user WHERE id = %s", (user_id,)
+    ).fetchone()
+    if row is None or not row.get("password_hash"):
+        raise AuthError("Account not found.")
+    if not verify_password(current, row["password_hash"]):
+        raise AuthError("Current password is incorrect.")
+    if len(new) < 8:
+        raise AuthError("New password must be at least 8 characters.")
+    conn.execute(
+        "UPDATE app_user SET password_hash = %s WHERE id = %s",
+        (hash_password(new), user_id),
+    )
+    conn.commit()
+
+
 def revoke_sessions(conn: DictConn, user_id: str) -> None:
     """Bump the session epoch, invalidating every outstanding signed cookie
     for this user (used on logout)."""

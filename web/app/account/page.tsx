@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Download, Lock, Trash2 } from "lucide-react";
-import { api } from "@/lib/api";
+import { Check, Download, KeyRound, Lock, Trash2 } from "lucide-react";
+import { api, ApiError } from "@/lib/api";
 import { TopBar } from "@/components/nav/top-bar";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -83,6 +83,8 @@ export default function AccountPage() {
           </p>
         </Card>
 
+        <ChangePassword />
+
         <Card eyebrow="Data" title="Export">
           <div className="flex items-center justify-between gap-6">
             <p className="m-0 max-w-[460px] text-[13px] leading-[1.55] text-ink-2">
@@ -117,5 +119,58 @@ export default function AccountPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+function ChangePassword() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const change = useMutation({
+    mutationFn: () => api.changePassword(current, next),
+    onSuccess: () => {
+      setDone(true);
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+      setError(null);
+      setTimeout(() => setDone(false), 3000);
+    },
+    onError: (e) => setError(e instanceof ApiError ? e.message : "Could not change password."),
+  });
+
+  const mismatch = confirm.length > 0 && next !== confirm;
+  const canSubmit = current.length > 0 && next.length >= 8 && next === confirm;
+
+  return (
+    <Card eyebrow="Security" title="Change password" actions={<Badge tone="ghost" icon={KeyRound}>Revokes other sessions</Badge>}>
+      <form
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (canSubmit) change.mutate();
+        }}
+      >
+        <Field label="Current">
+          <Input type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+        </Field>
+        <Field label="New" hint="≥ 8 chars">
+          <Input type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
+        </Field>
+        <Field label="Confirm" error={mismatch ? "doesn't match" : undefined}>
+          <Input type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        </Field>
+        <div className="sm:col-span-3">
+          <Button type="submit" variant="secondary" size="md" disabled={!canSubmit || change.isPending}>
+            {change.isPending ? "Updating…" : "Update password"}
+          </Button>
+          {done && <span className="ml-3 text-[13px] text-improved">Password updated.</span>}
+          {error && <span className="ml-3 text-[13px] text-worsened">{error}</span>}
+        </div>
+      </form>
+    </Card>
   );
 }
