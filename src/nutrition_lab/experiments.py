@@ -197,6 +197,18 @@ def update_experiment(
     return _experiment_from_row(row)
 
 
+def delete_experiment(conn: "DictConn", user_id: str, experiment_id: str) -> None:
+    """Delete an experiment and (via FK cascade) all its logs, meals,
+    interventions, outcomes, confounders, and snapshots. 404 if not owned."""
+    cur = conn.execute(
+        "DELETE FROM experiment WHERE id = %s AND user_id = %s",
+        (experiment_id, user_id),
+    )
+    conn.commit()
+    if cur.rowcount == 0:
+        raise NotFoundError(f"Experiment {experiment_id} not found.")
+
+
 # ─── Lifecycle ───────────────────────────────────────────────────────
 def _transition(
     conn: "DictConn",
@@ -349,6 +361,19 @@ def update_intervention(
     return Intervention(**require(row))
 
 
+def delete_intervention(
+    conn: "DictConn", user_id: str, intervention_id: str
+) -> None:
+    cur = conn.execute(
+        "DELETE FROM intervention WHERE id = %s AND experiment_id IN "
+        "(SELECT id FROM experiment WHERE user_id = %s)",
+        (intervention_id, user_id),
+    )
+    conn.commit()
+    if cur.rowcount == 0:
+        raise NotFoundError(f"Intervention {intervention_id} not found.")
+
+
 # ─── Outcome definitions ─────────────────────────────────────────────
 def add_outcome(
     conn: "DictConn",
@@ -434,3 +459,14 @@ def update_outcome(
     ).fetchone()
     conn.commit()
     return OutcomeDefinition(**require(row))
+
+
+def delete_outcome(conn: "DictConn", user_id: str, outcome_id: str) -> None:
+    cur = conn.execute(
+        "DELETE FROM outcome_definition WHERE id = %s AND experiment_id IN "
+        "(SELECT id FROM experiment WHERE user_id = %s)",
+        (outcome_id, user_id),
+    )
+    conn.commit()
+    if cur.rowcount == 0:
+        raise NotFoundError(f"Outcome {outcome_id} not found.")

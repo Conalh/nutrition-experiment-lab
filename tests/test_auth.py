@@ -118,6 +118,11 @@ def test_cannot_modify_another_users_intervention_or_outcome(conn):
     # Empty-body PATCH must not leak the row either.
     assert bob.patch(f"/api/outcomes/{oc['id']}", json={}).status_code == 404
 
+    # Cross-tenant DELETE attempts → 404.
+    assert bob.delete(f"/api/interventions/{iv['id']}").status_code == 404
+    assert bob.delete(f"/api/outcomes/{oc['id']}").status_code == 404
+    assert bob.delete(f"/api/experiments/{exp['id']}").status_code == 404
+
     # Alice's data is untouched.
     detail = alice.get(f"/api/experiments/{exp['id']}").json()
     assert detail["interventions"][0]["name"] == "secret rule"

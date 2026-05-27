@@ -245,16 +245,32 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  updateExperiment: (id: string, body: Record<string, unknown>) =>
+    request<Experiment>(`/api/experiments/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteExperiment: (id: string) =>
+    request(`/api/experiments/${id}`, { method: "DELETE" }),
   addIntervention: (id: string, body: Record<string, unknown>) =>
     request<Intervention>(`/api/experiments/${id}/interventions`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  deleteIntervention: (id: string) =>
+    request(`/api/interventions/${id}`, { method: "DELETE" }),
   addOutcome: (id: string, body: Record<string, unknown>) =>
     request<OutcomeDefinition>(`/api/experiments/${id}/outcomes`, {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  updateOutcome: (id: string, body: Record<string, unknown>) =>
+    request<OutcomeDefinition>(`/api/outcomes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteOutcome: (id: string) =>
+    request(`/api/outcomes/${id}`, { method: "DELETE" }),
   lifecycle: (id: string, action: string, body?: Record<string, unknown>) =>
     request<Experiment>(`/api/experiments/${id}/${action}`, {
       method: "POST",

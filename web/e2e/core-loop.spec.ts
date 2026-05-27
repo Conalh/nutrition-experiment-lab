@@ -82,4 +82,11 @@ test("create, log, analyze, and report an experiment", async ({ page }) => {
   await page.waitForURL(/\/reports\/exp_/);
   await expect(page.getByText("Download PDF")).toBeVisible();
   await expect(page.getByText("Recommendation")).toBeVisible();
+
+  // 7. Delete the experiment from the detail page → back to an empty dashboard
+  await page.goto(`/experiments/${expId}`);
+  await page.getByRole("button", { name: "Delete experiment" }).click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.waitForURL((url) => url.pathname === "/");
+  await expect(page.getByText("Welcome to your lab notebook")).toBeVisible();
 });

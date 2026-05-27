@@ -145,3 +145,30 @@ def test_only_one_primary_outcome(conn, user_id):
     outcomes = svc.list_outcomes(conn, exp.id)
     assert sum(1 for o in outcomes if o.is_primary) == 1
     assert next(o for o in outcomes if o.is_primary).name == "B"
+
+
+# ─── Delete ──────────────────────────────────────────────────────────
+def test_delete_experiment_cascades(conn, user_id):
+    exp = _ready(conn, user_id)
+    svc.delete_experiment(conn, user_id, exp.id)
+    with pytest.raises(svc.NotFoundError):
+        svc.get_experiment(conn, user_id, exp.id)
+    # children gone via cascade
+    assert svc.list_interventions(conn, exp.id) == []
+    assert svc.list_outcomes(conn, exp.id) == []
+
+
+def test_delete_missing_experiment_raises(conn, user_id):
+    with pytest.raises(svc.NotFoundError):
+        svc.delete_experiment(conn, user_id, "exp_nope")
+
+
+def test_delete_intervention_and_outcome(conn, user_id):
+    exp = _make(conn, user_id)
+    iv = svc.add_intervention(conn, user_id, exp.id,
+                              InterventionCreate(name="x", rule_text="y"))
+    oc = svc.add_outcome(conn, user_id, exp.id, OutcomeCreate(name="O"))
+    svc.delete_intervention(conn, user_id, iv.id)
+    svc.delete_outcome(conn, user_id, oc.id)
+    assert svc.list_interventions(conn, exp.id) == []
+    assert svc.list_outcomes(conn, exp.id) == []

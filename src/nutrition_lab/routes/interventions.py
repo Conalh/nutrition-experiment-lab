@@ -48,6 +48,17 @@ def update_intervention(
         raise to_http(exc)
 
 
+@router.delete("/interventions/{intervention_id}")
+def delete_intervention(
+    intervention_id: str, conn: DictConn = ConnDep, user_id: str = UserDep
+) -> dict[str, bool]:
+    try:
+        svc.delete_intervention(conn, user_id, intervention_id)
+    except Exception as exc:
+        raise to_http(exc)
+    return {"ok": True}
+
+
 @router.post(
     "/experiments/{experiment_id}/outcomes",
     response_model=OutcomeDefinition,
@@ -76,3 +87,14 @@ def update_outcome(
         return svc.update_outcome(conn, user_id, outcome_id, data)
     except Exception as exc:
         raise to_http(exc)
+
+
+@router.delete("/outcomes/{outcome_id}")
+def delete_outcome(
+    outcome_id: str, conn: DictConn = ConnDep, user_id: str = UserDep
+) -> dict[str, bool]:
+    try:
+        svc.delete_outcome(conn, user_id, outcome_id)
+    except Exception as exc:
+        raise to_http(exc)
+    return {"ok": True}

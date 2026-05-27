@@ -58,6 +58,17 @@ def update_experiment(
         raise to_http(exc)
 
 
+@router.delete("/{experiment_id}")
+def delete_experiment(
+    experiment_id: str, conn: DictConn = ConnDep, user_id: str = UserDep
+) -> dict[str, bool]:
+    try:
+        svc.delete_experiment(conn, user_id, experiment_id)
+    except Exception as exc:
+        raise to_http(exc)
+    return {"ok": True}
+
+
 @router.post("/{experiment_id}/start", response_model=Experiment)
 def start(experiment_id: str, conn: DictConn = ConnDep, user_id: str = UserDep):
     try:
