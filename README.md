@@ -1,12 +1,13 @@
 # Nutrition Experiment Lab
 
+[![tests](https://github.com/Conalh/nutrition-experiment-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/Conalh/nutrition-experiment-lab/actions/workflows/tests.yml)
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](web/package.json)
 [![fastapi](https://img.shields.io/badge/FastAPI-0.110%2B-009688?logo=fastapi&logoColor=white)](pyproject.toml)
 [![postgres](https://img.shields.io/badge/Postgres-17-336791?logo=postgresql&logoColor=white)](src/nutrition_lab/db.py)
 [![mypy](https://img.shields.io/badge/mypy-checked-2a6db2)](pyproject.toml)
 [![ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![license](https://img.shields.io/badge/license-MIT-green)](pyproject.toml)
+[![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **A private lab notebook for n-of-1 nutrition experiments.** Pick one clear question, run a bounded experiment with a baseline and an intervention window, log a small set of daily outcomes, and get a transparent readout: what changed, whether adherence was good enough to trust it, what confounders might explain it, and what to do next — without a single medical claim.
 
@@ -31,7 +32,7 @@ flowchart LR
 
 Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgres. The analysis layer is rules-based and deliberately conservative — every readout shows its work and downgrades its own confidence when the data is thin.
 
-**See also:** [PLAN.md](PLAN.md) for the full product thesis, scope boundaries, and the phased build.
+**See also:** [PLAN.md](PLAN.md) for the full product thesis, scope boundaries, and the phased build · [ROADMAP.md](ROADMAP.md) for what's shipped and what's next.
 
 ## Why this exists
 
