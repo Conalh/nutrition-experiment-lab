@@ -34,20 +34,6 @@ Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgre
 
 **See also:** [PLAN.md](PLAN.md) for the full product thesis, scope boundaries, and the phased build · [ROADMAP.md](ROADMAP.md) for what's shipped and what's next.
 
-## Screenshots
-
-First-run onboarding guides you to build your first experiment — or load a finished demo in one click:
-
-![First-run onboarding](docs/screenshots/onboarding.png)
-
-| Experiment builder | Experiment detail (analysis) |
-| --- | --- |
-| ![Experiment builder](docs/screenshots/builder.png) | ![Experiment detail](docs/screenshots/detail.png) |
-| **Report** | **Dashboard** |
-| ![Report](docs/screenshots/report.png) | ![Dashboard](docs/screenshots/dashboard.png) |
-
-> Captured with Playwright against a seeded demo — regenerate any time with `npm run screenshots` (from `web/`).
-
 ## Why this exists
 
 A health-conscious person who wants to know whether a change actually helps — *does a higher-protein breakfast cut my afternoon hunger? does cutting late caffeine improve my sleep?* — has no good way to find out. Tracking apps pile on calorie counts and macro targets; they don't run an experiment, and they don't tell you whether the result is trustworthy.
@@ -235,7 +221,6 @@ nutrition-experiment-lab/
 │   ├── app/              dashboard · builder · log · detail · report · account · privacy
 │   ├── components/       cards, charts, confounder list, safety notice, states, nav
 │   ├── e2e/              Playwright core-loop test
-│   ├── screenshots/      Playwright capture (generates docs/screenshots)
 │   └── lib/api.ts        typed client
 └── PLAN.md               product thesis + phased build
 ```

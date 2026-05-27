@@ -23,7 +23,7 @@ These were the plan; they are done. Kept here so the forward phases don't repeat
 | **Account controls** | Full JSON export; complete data wipe (keeps user identity) | `account.py`, `routes/account.py` |
 | **Frontend** | Dashboard, builder (live safety warnings), daily log, detail (charts + analyze), report (PDF), account, privacy | `web/app/`, `web/components/` |
 | **Repo hygiene** | README, LICENSE (MIT), `.gitignore`, this roadmap | repo root |
-| **Beta hardening** | GitHub Actions CI (pytest 3.11/3.12 + ruff + mypy + frontend tsc + Playwright e2e), README screenshots | `.github/`, `web/e2e/`, `web/screenshots/` |
+| **Beta hardening** | GitHub Actions CI (pytest 3.11/3.12 + ruff + mypy + frontend tsc + Playwright e2e) | `.github/`, `web/e2e/` |
 | **First-run onboarding** | Dashboard zero-state with the 3-step loop + one-click "Load a demo" | `web/components/onboarding.tsx`, `routes/demo.py` |
 | **Real auth / multi-user** | Email+password (bcrypt) + signed HttpOnly session cookie; per-user scoping with isolation tests; login UI + auth guard | `auth.py`, `users.py`, `routes/auth.py`, `web/app/login`, `web/components/auth-guard.tsx` |
 
