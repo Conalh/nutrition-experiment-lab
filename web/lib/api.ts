@@ -64,6 +64,12 @@ export type OutcomeResult =
   | "unchanged"
   | "inconclusive";
 
+export interface UserPublic {
+  id: string;
+  email: string;
+  display_name: string;
+}
+
 export interface Experiment {
   id: string;
   user_id: string;
@@ -219,6 +225,18 @@ export interface Report {
 
 // ─── Endpoints ───────────────────────────────────────────────────────
 export const api = {
+  me: () => request<UserPublic>("/api/auth/me"),
+  signup: (email: string, password: string, display_name?: string) =>
+    request<UserPublic>("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ email, password, display_name }),
+    }),
+  login: (email: string, password: string) =>
+    request<UserPublic>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  logout: () => request("/api/auth/logout", { method: "POST" }),
   listExperiments: () => request<Experiment[]>("/api/experiments"),
   getExperiment: (id: string) =>
     request<ExperimentDetail>(`/api/experiments/${id}`),

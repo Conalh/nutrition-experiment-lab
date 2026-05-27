@@ -17,6 +17,7 @@ from .db import init_db
 from .routes import (
     account,
     analysis,
+    auth,
     demo,
     experiments,
     interventions,
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
         allow_credentials=True,
     )
 
+    app.include_router(auth.router)
     app.include_router(experiments.router)
     app.include_router(interventions.router)
     app.include_router(logging.router)

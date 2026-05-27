@@ -189,6 +189,7 @@ def init_db(conn: DictConn | None = None) -> None:
 # keeps this dependency-free (no Alembic needed at single-user scale).
 _MIGRATIONS = [
     "ALTER TABLE outcome_definition ADD COLUMN IF NOT EXISTS metric TEXT",
+    "ALTER TABLE app_user ADD COLUMN IF NOT EXISTS password_hash TEXT",
 ]
 
 

@@ -94,6 +94,24 @@ class Confidence(str, Enum):
 Rating = int  # constrained 1..5 at the DB layer and in field definitions below
 
 
+# ─── Auth ────────────────────────────────────────────────────────────
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    display_name: str | None = None
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UserPublic(BaseModel):
+    id: str
+    email: str
+    display_name: str
+
+
 # ─── Experiment ──────────────────────────────────────────────────────
 class ExperimentCreate(BaseModel):
     title: str

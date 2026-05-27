@@ -1,17 +1,23 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
-const API = "http://127.0.0.1:8078";
+/** Sign up a fresh user through the UI; lands authenticated on the dashboard.
+ * A unique email avoids collisions (the test DB isn't reset between tests). */
+async function signUp(page: Page): Promise<void> {
+  const email = `e2e_${Date.now()}_${Math.floor(Math.random() * 1e6)}@example.com`;
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Create one" }).click();
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+}
 
 test("shows onboarding and loads a demo from the zero-state", async ({
   page,
-  request,
 }) => {
-  await request.delete(`${API}/api/account/data`); // ensure empty
+  await signUp(page); // fresh user → empty dashboard → onboarding
 
-  await page.goto("/");
-  await expect(
-    page.getByText("Welcome to your lab notebook"),
-  ).toBeVisible();
+  await expect(page.getByText("Welcome to your lab notebook")).toBeVisible();
 
   await page.getByRole("button", { name: "Load a demo experiment" }).click();
   await page.waitForURL(/\/experiments\/exp_/);
@@ -26,8 +32,8 @@ test("shows onboarding and loads a demo from the zero-state", async ({
 test("create, log, analyze, and report an experiment", async ({ page }) => {
   const title = `E2E protein breakfast ${Date.now()}`;
 
-  // 1. Dashboard → builder
-  await page.goto("/");
+  // 1. Sign up → dashboard → builder
+  await signUp(page);
   await page.getByRole("link", { name: /new experiment/i }).first().click();
   await expect(
     page.getByRole("heading", { name: /design an experiment/i }),

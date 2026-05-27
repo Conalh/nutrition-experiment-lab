@@ -1,4 +1,9 @@
-import { expect, test, type APIRequestContext } from "@playwright/test";
+import {
+  expect,
+  test,
+  type APIRequestContext,
+  type Page,
+} from "@playwright/test";
 
 /**
  * Seeds a realistic completed experiment through the API, then screenshots
@@ -14,9 +19,6 @@ const I_START = "2026-04-08";
 const I_END = "2026-04-21";
 
 async function seed(request: APIRequestContext): Promise<string> {
-  // Clean slate so the dashboard shows only our showcase experiment.
-  await request.delete(`${API}/api/account/data`);
-
   const exp = await (
     await request.post(`${API}/api/experiments`, {
       data: {
@@ -105,6 +107,17 @@ async function seed(request: APIRequestContext): Promise<string> {
   return id;
 }
 
+async function signUp(page: Page): Promise<string> {
+  const email = `shots_${Date.now()}@example.com`;
+  await page.goto("/login");
+  await page.getByRole("button", { name: "Create one" }).click();
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("password123");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
+  return email;
+}
+
 test("capture screenshots", async ({ page, request }) => {
   // Clean shots: make the sticky nav static (so it doesn't float mid-page in
   // fullPage captures) and hide the Next.js dev-tools button.
@@ -115,12 +128,15 @@ test("capture screenshots", async ({ page, request }) => {
     document.documentElement.appendChild(s);
   });
 
-  // Onboarding zero-state (before any data exists).
-  await request.delete(`${API}/api/account/data`);
-  await page.goto("/");
+  // Fresh user → empty dashboard → onboarding zero-state.
+  const email = await signUp(page);
   await expect(page.getByText("Welcome to your lab notebook")).toBeVisible();
   await page.screenshot({ path: `${OUT}/onboarding.png`, fullPage: true });
 
+  // Authenticate the API request context as the same user, then seed.
+  await request.post(`${API}/api/auth/login`, {
+    data: { email, password: "password123" },
+  });
   const id = await seed(request);
 
   // Dashboard

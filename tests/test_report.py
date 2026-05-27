@@ -3,13 +3,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-import pytest
-from fastapi.testclient import TestClient
-
 from nutrition_lab import experiments as exp_svc
 from nutrition_lab import logging as log_svc
 from nutrition_lab import report as report_svc
-from nutrition_lab.api import create_app
 from nutrition_lab.models import (
     DailyLogUpsert,
     ExperimentCreate,
@@ -69,13 +65,8 @@ def test_report_contents(conn, user_id):
     assert any("single-person" in c for c in report.caveats)
 
 
-@pytest.fixture
-def client(conn):
-    return TestClient(create_app())
-
-
-def test_analysis_routes(client, conn, user_id):
-    exp = _populate(conn, user_id)
+def test_analysis_routes(client, conn, auth_user_id):
+    exp = _populate(conn, auth_user_id)
 
     # No analysis yet → 404
     assert client.get(f"/api/experiments/{exp.id}/analysis").status_code == 404

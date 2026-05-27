@@ -1,16 +1,16 @@
 """Shared FastAPI dependencies and domain-error → HTTP mapping.
 
 Every request opens a fresh psycopg connection and closes it on response.
-In V1 there's a single user, so ``current_user_id`` is a constant; when
-real auth lands it becomes the only thing that needs to change here.
+``current_user_id`` resolves the authenticated user from the signed session
+cookie and is the single chokepoint that scopes every request to its owner.
 """
 from __future__ import annotations
 
 from collections.abc import Iterator
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 
-from ..config import DEFAULT_USER_ID
+from ..auth import COOKIE_NAME, read_session
 from ..db import DictConn, connect
 from ..experiments import NotFoundError, TransitionError, ValidationError
 
@@ -23,8 +23,12 @@ def get_conn() -> Iterator[DictConn]:
         conn.close()
 
 
-def current_user_id() -> str:
-    return DEFAULT_USER_ID
+def current_user_id(request: Request) -> str:
+    """The authenticated user id from the session cookie; 401 if absent."""
+    user_id = read_session(request.cookies.get(COOKIE_NAME))
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    return user_id
 
 
 def to_http(exc: Exception) -> HTTPException:

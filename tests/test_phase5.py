@@ -3,13 +3,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-import pytest
-from fastapi.testclient import TestClient
-
 from nutrition_lab import account as account_svc
 from nutrition_lab import experiments as exp_svc
 from nutrition_lab import logging as log_svc
-from nutrition_lab.api import create_app
 from nutrition_lab.models import (
     DailyLogUpsert,
     ExperimentCreate,
@@ -51,13 +47,8 @@ def _populate(conn, user_id):
     return exp
 
 
-@pytest.fixture
-def client(conn):
-    return TestClient(create_app())
-
-
-def test_pdf_endpoint_returns_pdf(client, conn, user_id):
-    exp = _populate(conn, user_id)
+def test_pdf_endpoint_returns_pdf(client, conn, auth_user_id):
+    exp = _populate(conn, auth_user_id)
     r = client.get(f"/api/experiments/{exp.id}/report.pdf")
     assert r.status_code == 200, r.text
     assert r.headers["content-type"] == "application/pdf"
@@ -79,15 +70,15 @@ def test_account_export_bundle(conn, user_id):
     assert isinstance(bundle["daily_logs"][0]["date"], str)
 
 
-def test_account_export_route(client, conn, user_id):
-    _populate(conn, user_id)
+def test_account_export_route(client, conn, auth_user_id):
+    _populate(conn, auth_user_id)
     r = client.get("/api/account/export")
     assert r.status_code == 200
-    assert r.json()["user"]["id"] == user_id
+    assert r.json()["user"]["id"] == auth_user_id
 
 
-def test_delete_wipes_data_keeps_user(client, conn, user_id):
-    _populate(conn, user_id)
+def test_delete_wipes_data_keeps_user(client, conn, auth_user_id):
+    _populate(conn, auth_user_id)
     r = client.delete("/api/account/data")
     assert r.status_code == 200
     deleted = r.json()["deleted"]
@@ -95,16 +86,16 @@ def test_delete_wipes_data_keeps_user(client, conn, user_id):
     assert deleted["daily_log"] == 21
 
     # Everything is gone…
-    assert exp_svc.list_experiments(conn, user_id) == []
+    assert exp_svc.list_experiments(conn, auth_user_id) == []
     # …but the user identity row survives.
     row = conn.execute(
-        "SELECT id FROM app_user WHERE id = %s", (user_id,)
+        "SELECT id FROM app_user WHERE id = %s", (auth_user_id,)
     ).fetchone()
     assert row is not None
 
 
-def test_delete_is_idempotent(client, conn, user_id):
-    _populate(conn, user_id)
+def test_delete_is_idempotent(client, conn, auth_user_id):
+    _populate(conn, auth_user_id)
     client.delete("/api/account/data")
     r = client.delete("/api/account/data")
     assert r.status_code == 200

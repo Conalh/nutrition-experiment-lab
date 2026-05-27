@@ -78,20 +78,18 @@ createdb nutrition_lab
 createdb nutrition_lab_test
 ```
 
-The default connection string is `postgresql://postgres:postgres@localhost:5432/nutrition_lab`; override it with `NUTRITION_LAB_DATABASE_URL` if your setup differs.
+The default connection string is `postgresql://postgres:postgres@localhost:5432/nutrition_lab`; override it with `NUTRITION_LAB_DATABASE_URL` if your setup differs. In any non-dev deployment also set `NUTRITION_LAB_SESSION_SECRET` (so session cookies survive restarts) and `NUTRITION_LAB_SESSION_SECURE=1` (HTTPS-only cookies).
 
 ### Backend
 
 ```bash
 pip install -e ".[dev]"
 
-# Schema is applied automatically on startup; seed a demo experiment to explore:
-python -m nutrition_lab.demo
-
+# Schema + migrations apply automatically on startup.
 nutrition-lab-serve          # FastAPI on :8000  (also: python -m nutrition_lab.serve)
 ```
 
-Open http://localhost:8000/docs for the interactive API. The demo seeds one completed experiment — *higher-protein breakfast vs afternoon hunger* — with ~3 weeks of logs, meals, and a confounder, so the dashboard and report have data to render.
+Open http://localhost:8000/docs for the interactive API. The app is multi-user: sign up at `/login` (or load a demo from the dashboard once signed in). Every record is scoped to the signed-in account.
 
 > Port 8000 in use? Set `NUTRITION_LAB_PORT=8077` (and point the frontend at it — see below).
 
@@ -115,7 +113,7 @@ In [`src/nutrition_lab/db.py`](src/nutrition_lab/db.py) and [`models.py`](src/nu
 
 | Entity | What it is |
 | --- | --- |
-| `app_user` | The single account in V1; every row is scoped to it (multi-user is out of scope) |
+| `app_user` | A registered account (email + bcrypt `password_hash`); every other row is scoped to its `user_id` |
 | `experiment` | The question, hypothesis, status, and the baseline / washout / intervention windows |
 | `intervention` | The one thing being changed, its rule text, and category (protein, fiber, timing, …) |
 | `outcome_definition` | A measured outcome: kind, direction (higher/lower/target), and the `metric` it maps to |
@@ -187,6 +185,7 @@ announce each option correctly.
 Mounted in [`src/nutrition_lab/api.py`](src/nutrition_lab/api.py); browse it at `/docs`.
 
 ```
+Auth          POST /api/auth/{signup|login|logout} · GET /api/auth/me
 Experiments   GET/POST /api/experiments · GET/PATCH /api/experiments/{id}
               POST /api/experiments/{id}/{start|pause|resume|complete|abandon}
               POST /api/experiments/check-safety
@@ -243,9 +242,9 @@ nutrition-experiment-lab/
 
 ## Status
 
-V1 complete — all five phases of [PLAN.md](PLAN.md) shipped: experiment spine, daily logging, analysis engine, frontend, and export/safety polish. Single-user, runs on the maintainer's machine.
+V1 complete — all five phases of [PLAN.md](PLAN.md) shipped: experiment spine, daily logging, analysis engine, frontend, and export/safety polish. Now **multi-user** with email/password auth (bcrypt + a signed HttpOnly session cookie); every record is scoped to its owner and isolation is regression-tested.
 
-Deliberately **out of V1 scope**: barcode scanning, a full nutrient database, wearable integrations, AI meal generation, diet plans, real multi-user auth, and any medical-condition protocols.
+Deliberately **out of scope**: barcode scanning, a full nutrient database, wearable integrations, AI meal generation, diet plans, and any medical-condition protocols.
 
 ## License
 

@@ -35,6 +35,7 @@ export default defineConfig({
         NUTRITION_LAB_PORT: "8078",
         NUTRITION_LAB_DATABASE_URL: TEST_DB,
         NUTRITION_LAB_CORS_ORIGINS: `${WEB},http://localhost:3100`,
+        NUTRITION_LAB_SESSION_SECRET: "e2e-secret",
       },
     },
     {

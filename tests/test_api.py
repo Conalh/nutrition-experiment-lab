@@ -1,19 +1,12 @@
-"""Thin API-level smoke test through the FastAPI app via httpx."""
+"""Thin API-level smoke test through the FastAPI app via httpx.
+
+Uses the authenticated ``client`` fixture from conftest.
+"""
 from __future__ import annotations
 
 from datetime import date, timedelta
 
-import pytest
-from fastapi.testclient import TestClient
-
-from nutrition_lab.api import create_app
-
 TODAY = date(2026, 1, 1)
-
-
-@pytest.fixture
-def client(conn):  # conn fixture truncates tables first
-    return TestClient(create_app())
 
 
 def test_health(client):
