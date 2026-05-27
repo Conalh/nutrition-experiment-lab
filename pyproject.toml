@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "nutrition-experiment-lab"
 version = "0.1.0"
 description = "A private lab notebook for running structured n-of-1 nutrition experiments."
-readme = "PLAN.md"
+readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Conal" }]
