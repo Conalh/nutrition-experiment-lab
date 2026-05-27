@@ -26,17 +26,20 @@ These were the plan; they are done. Kept here so the forward phases don't repeat
 | **Beta hardening** | GitHub Actions CI (pytest 3.11/3.12 + ruff + mypy + frontend tsc + Playwright e2e) | `.github/`, `web/e2e/` |
 | **First-run onboarding** | Dashboard zero-state with the 3-step loop + one-click "Load a demo" | `web/components/onboarding.tsx`, `routes/demo.py` |
 | **Real auth / multi-user** | Email+password (bcrypt) + signed HttpOnly session cookie; per-user scoping with isolation tests; login UI + auth guard | `auth.py`, `users.py`, `routes/auth.py`, `web/app/login`, `web/components/auth-guard.tsx` |
+| **Visual redesign** | Tailwind v4 token system, Instrument/JetBrains type, nav rail, viz components; every screen reskinned | `web/app`, `web/components/{ui,viz,brand,nav}` |
+| **Security review** | Multi-agent audit; fixed cross-tenant IDOR (intervention/outcome PATCH+DELETE) and made sessions revocable (`session_epoch`) | `experiments.py`, `auth.py`, `deps.py`, `tests/test_auth.py` |
+| **CRUD completeness** | Edit protocol; add/delete interventions & outcomes (+ set primary); abandon; per-experiment delete (cascade), all user-scoped | `experiments.py`, `routes/`, `web/app/experiments/[id]` |
 
 ---
 
 ## Next up (recommended order)
 
-Short horizon before chasing new surface area:
+This is a portfolio project, so the bar is "complete and credible repo," not "operate a hosted service." Cheap, local-only work is prioritized; **paid hosting is deliberately deferred** — the public repo + README screenshots + green CI are the portfolio artifact.
 
-1. **Friend test** — one real person runs a full experiment end-to-end (see Phase 1).
-2. **Deploy** — get it off the laptop and onto a reachable URL (see Phase 2).
-3. **One-command run** — a dev script (or Docker Compose) that boots Postgres + API + web together.
-4. **Password reset** — today there's no forgot-password flow.
+1. **Password reset** — the one remaining auth gap (forgot-password flow).
+2. **Housekeeping** — bump CI off the deprecated Node 20 actions.
+3. **Demo recording / GIF in the README** — convey "it runs" without paying to host.
+4. **Deploy — deferred (cost).** Only if a live link is ever worth it; a $0 path exists (free-tier Postgres + free web tier) with caveats. Not pursued now.
 
 ---
 
