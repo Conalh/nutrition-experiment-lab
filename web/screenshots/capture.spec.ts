@@ -107,6 +107,41 @@ async function seed(request: APIRequestContext): Promise<string> {
   return id;
 }
 
+/** A second, in-flight experiment so the dashboard shows an active row and
+ * the daily log has something to write against. Returns its id. */
+async function seedActive(request: APIRequestContext): Promise<string> {
+  const exp = await (
+    await request.post(`${API}/api/experiments`, {
+      data: {
+        title: "Caffeine cutoff vs sleep quality",
+        question: "Does cutting caffeine after noon improve my sleep?",
+        hypothesis: "No caffeine after 12pm means deeper, less broken sleep.",
+        baseline_start: "2026-05-01",
+        baseline_end: "2026-05-07",
+        intervention_start: "2026-05-08",
+        intervention_end: "2026-05-21",
+        primary_outcome: "Sleep quality (1-5, higher is better)",
+      },
+    })
+  ).json();
+  const id = exp.id as string;
+  await request.post(`${API}/api/experiments/${id}/interventions`, {
+    data: { name: "No caffeine after noon", rule_text: "No caffeine after 12pm.", category: "caffeine" },
+  });
+  await request.post(`${API}/api/experiments/${id}/outcomes`, {
+    data: { name: "Sleep quality", metric: "sleep_quality", direction: "higher_better", kind: "rating", is_primary: true },
+  });
+  await request.post(`${API}/api/experiments/${id}/start`);
+  for (let i = 0; i < 5; i++) {
+    const d = new Date("2026-05-01");
+    d.setDate(d.getDate() + i);
+    await request.post(`${API}/api/daily-log`, {
+      data: { experiment_id: id, date: d.toISOString().slice(0, 10), sleep_quality: 3, energy: 3 },
+    });
+  }
+  return id;
+}
+
 async function signUp(page: Page): Promise<string> {
   const email = `shots_${Date.now()}@example.com`;
   await page.goto("/login");
@@ -140,8 +175,9 @@ test("capture screenshots", async ({ page, request }) => {
     data: { email, password: "password123" },
   });
   const id = await seed(request);
+  await seedActive(request);
 
-  // Dashboard
+  // Dashboard (one completed finding + one active experiment)
   await page.goto("/");
   await expect(
     page.getByText("Higher-protein breakfast vs afternoon hunger", {
@@ -149,6 +185,14 @@ test("capture screenshots", async ({ page, request }) => {
     }),
   ).toBeVisible();
   await page.screenshot({ path: `${OUT}/dashboard.png`, fullPage: true });
+
+  // Daily log (rate a few metrics for a lived-in shot)
+  await page.goto("/log");
+  await page.getByRole("radiogroup", { name: /Hunger rating/i }).getByRole("radio").nth(1).click();
+  await page.getByRole("radiogroup", { name: /Energy rating/i }).getByRole("radio").nth(3).click();
+  await page.getByRole("radiogroup", { name: /Sleep quality rating/i }).getByRole("radio").nth(3).click();
+  await page.getByRole("radio", { name: "Yes" }).click();
+  await page.screenshot({ path: `${OUT}/daily-log.png`, fullPage: true });
 
   // Builder (populated, clean)
   await page.goto("/experiments/new");

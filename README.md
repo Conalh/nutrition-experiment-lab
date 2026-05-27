@@ -40,9 +40,11 @@ A calm, editorial instrument — Instrument Serif headlines, mono numerics, a si
 
 ![Sign in](docs/screenshots/login.png)
 
-| First-run onboarding | Experiment detail (analysis) |
+| Dashboard | First-run onboarding |
 | --- | --- |
-| ![Onboarding](docs/screenshots/onboarding.png) | ![Experiment detail](docs/screenshots/detail.png) |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Onboarding](docs/screenshots/onboarding.png) |
+| **Experiment detail (analysis)** | **Daily log** |
+| ![Experiment detail](docs/screenshots/detail.png) | ![Daily log](docs/screenshots/daily-log.png) |
 | **Experiment builder** | **Report (print theme)** |
 | ![Builder](docs/screenshots/builder.png) | ![Report](docs/screenshots/report.png) |
 
