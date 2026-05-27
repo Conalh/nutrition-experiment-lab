@@ -14,7 +14,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import load_env
 from .db import init_db
-from .routes import account, analysis, experiments, interventions, logging
+from .routes import (
+    account,
+    analysis,
+    demo,
+    experiments,
+    interventions,
+    logging,
+)
 
 # Origins allowed to call the API in dev (Next.js runs cross-port). Override
 # via NUTRITION_LAB_CORS_ORIGINS (comma-separated) — e.g. the e2e harness
@@ -50,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(logging.router)
     app.include_router(analysis.router)
     app.include_router(account.router)
+    app.include_router(demo.router)
 
     @app.get("/api/health", tags=["meta"])
     def health() -> dict[str, str]:

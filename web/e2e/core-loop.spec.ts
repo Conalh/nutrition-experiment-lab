@@ -1,5 +1,23 @@
 import { expect, test } from "@playwright/test";
 
+const API = "http://127.0.0.1:8078";
+
+test("shows onboarding and loads a demo from the zero-state", async ({
+  page,
+  request,
+}) => {
+  await request.delete(`${API}/api/account/data`); // ensure empty
+
+  await page.goto("/");
+  await expect(
+    page.getByText("Welcome to your lab notebook"),
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Load a demo experiment" }).click();
+  await page.waitForURL(/\/experiments\/exp_/);
+  await expect(page.getByText("Protocol")).toBeVisible();
+});
+
 /**
  * Drives the core loop in a real browser:
  * dashboard → builder → daily log → detail (analyze) → report.

@@ -106,8 +106,6 @@ async function seed(request: APIRequestContext): Promise<string> {
 }
 
 test("capture screenshots", async ({ page, request }) => {
-  const id = await seed(request);
-
   // Clean shots: make the sticky nav static (so it doesn't float mid-page in
   // fullPage captures) and hide the Next.js dev-tools button.
   await page.addInitScript(() => {
@@ -116,6 +114,14 @@ test("capture screenshots", async ({ page, request }) => {
       "nav{position:static !important} nextjs-portal,[aria-label='Open Next.js Dev Tools']{display:none !important}";
     document.documentElement.appendChild(s);
   });
+
+  // Onboarding zero-state (before any data exists).
+  await request.delete(`${API}/api/account/data`);
+  await page.goto("/");
+  await expect(page.getByText("Welcome to your lab notebook")).toBeVisible();
+  await page.screenshot({ path: `${OUT}/onboarding.png`, fullPage: true });
+
+  const id = await seed(request);
 
   // Dashboard
   await page.goto("/");

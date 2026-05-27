@@ -276,6 +276,8 @@ export const api = {
     request<AnalysisResult>(`/api/experiments/${id}/analysis`),
   getReport: (id: string) => request<Report>(`/api/experiments/${id}/report`),
   reportPdfUrl: (id: string) => `${API_BASE}/api/experiments/${id}/report.pdf`,
+  seedDemo: () =>
+    request<{ experiment_id: string }>("/api/demo", { method: "POST" }),
   exportAccount: () => request<Record<string, unknown>>("/api/account/export"),
   deleteAccountData: () =>
     request<{ deleted: Record<string, number> }>("/api/account/data", {

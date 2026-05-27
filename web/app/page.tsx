@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ExperimentCard } from "@/components/experiment-card";
 import { Button } from "@/components/ui";
-import { EmptyState, ErrorState, Loading } from "@/components/states";
+import { ErrorState, Loading } from "@/components/states";
+import { Onboarding } from "@/components/onboarding";
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
@@ -43,11 +44,7 @@ export default function Dashboard() {
         />
       )}
 
-      {!isLoading && !error && experiments.length === 0 && (
-        <EmptyState title="No experiments yet">
-          Create your first one to get started.
-        </EmptyState>
-      )}
+      {!isLoading && !error && experiments.length === 0 && <Onboarding />}
 
       {active.length > 0 && (
         <section className="mb-7">

@@ -36,11 +36,15 @@ Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgre
 
 ## Screenshots
 
-| Dashboard | Experiment builder |
+First-run onboarding guides you to build your first experiment — or load a finished demo in one click:
+
+![First-run onboarding](docs/screenshots/onboarding.png)
+
+| Experiment builder | Experiment detail (analysis) |
 | --- | --- |
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Experiment builder](docs/screenshots/builder.png) |
-| **Experiment detail (analysis)** | **Report** |
-| ![Experiment detail](docs/screenshots/detail.png) | ![Report](docs/screenshots/report.png) |
+| ![Experiment builder](docs/screenshots/builder.png) | ![Experiment detail](docs/screenshots/detail.png) |
+| **Report** | **Dashboard** |
+| ![Report](docs/screenshots/report.png) | ![Dashboard](docs/screenshots/dashboard.png) |
 
 > Captured with Playwright against a seeded demo — regenerate any time with `npm run screenshots` (from `web/`).
 
