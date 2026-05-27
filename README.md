@@ -34,6 +34,16 @@ Ships as a Next.js + Tailwind dashboard backed by a FastAPI service over Postgre
 
 **See also:** [PLAN.md](PLAN.md) for the full product thesis, scope boundaries, and the phased build · [ROADMAP.md](ROADMAP.md) for what's shipped and what's next.
 
+## Screenshots
+
+| Dashboard | Experiment builder |
+| --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Experiment builder](docs/screenshots/builder.png) |
+| **Experiment detail (analysis)** | **Report** |
+| ![Experiment detail](docs/screenshots/detail.png) | ![Report](docs/screenshots/report.png) |
+
+> Captured with Playwright against a seeded demo — regenerate any time with `npm run screenshots` (from `web/`).
+
 ## Why this exists
 
 A health-conscious person who wants to know whether a change actually helps — *does a higher-protein breakfast cut my afternoon hunger? does cutting late caffeine improve my sleep?* — has no good way to find out. Tracking apps pile on calorie counts and macro targets; they don't run an experiment, and they don't tell you whether the result is trustworthy.
@@ -151,15 +161,22 @@ The protocol guardrails ([`safety.py`](src/nutrition_lab/safety.py)) are a separ
 
 ## The dashboard
 
-Five screens, sharing the same chrome:
+Next.js App Router + a Tailwind v4 design system (a small `@theme` token
+palette, shared `Card` / `Button` / `Badge` / `Field` primitives, and
+consistent loading / empty / error states). Five screens, sharing the same
+chrome:
 
 - **`/`** — Dashboard: active/draft experiments and the completed library.
-- **`/experiments/new`** — Builder: question, hypothesis, windows, intervention, and outcomes, with **live safety warnings** as you type.
+- **`/experiments/new`** — Builder: question, hypothesis, windows (with an optional washout period), intervention, and outcomes, with **live safety warnings** as you type.
 - **`/log`** — Daily log: fast 1–5 rating buttons, adherence chips, weight, notes, and meals; pre-loads any existing entry for the date.
 - **`/experiments/[id]`** — Detail: protocol, lifecycle actions, **Run analysis** with confidence/adherence badges, baseline-vs-intervention bar charts, confounder flags, recommendation, and an add-confounder form.
 - **`/reports/[id]`** — Report: the shareable readout — outcomes, what changed / didn't, confounders, meal examples, recommendation, caveats, and a **Download PDF** button.
 
 Plus an **`/account`** page (export your data as JSON, download the report PDF, or permanently delete everything) and a **`/privacy`** page describing the non-clinical positioning.
+
+Grouped controls (rating and adherence buttons) use a `role="group"` with
+per-button `aria-label`s rather than a wrapping `<label>`, so screen readers
+announce each option correctly.
 
 ## API surface
 
@@ -184,9 +201,11 @@ Account       GET /api/account/export · DELETE /api/account/data
 ```bash
 pip install -e ".[dev]"
 pytest -q                    # runs against nutrition_lab_test
+
+cd web && npm run e2e        # Playwright: boots API + web, drives the loop
 ```
 
-40 tests covering invalid date windows and illegal lifecycle transitions, the single-primary-outcome rule, the daily-log upsert (one row per experiment+date), meals and confounders, the safety guardrails, the analysis engine across clean / messy / missing / confounded experiments, snapshot persistence, the "no p-values" guarantee, report generation, PDF export, account export, and the data-wipe (which keeps the user identity row). `ruff` and `mypy` both run clean; the frontend passes `tsc --noEmit`.
+40 backend tests covering invalid date windows and illegal lifecycle transitions, the single-primary-outcome rule, the daily-log upsert (one row per experiment+date), meals and confounders, the safety guardrails, the analysis engine across clean / messy / missing / confounded experiments, snapshot persistence, the "no p-values" guarantee, report generation, PDF export, account export, and the data-wipe (which keeps the user identity row). A **Playwright e2e** drives a real browser through the whole loop (dashboard → builder → log → analyze → report) against an isolated stack. `ruff` and `mypy` run clean; the frontend passes `tsc --noEmit`. All of it runs in [GitHub Actions](.github/workflows/tests.yml) on every push — backend on Python 3.11 & 3.12, frontend typecheck, and the e2e.
 
 ## Safety & privacy
 
@@ -211,7 +230,9 @@ nutrition-experiment-lab/
 ├── tests/                pytest suite (against nutrition_lab_test)
 ├── web/                  Next.js 16 + Tailwind 4 + TanStack Query
 │   ├── app/              dashboard · builder · log · detail · report · account · privacy
-│   ├── components/       cards, charts, confounder list, safety notice, nav
+│   ├── components/       cards, charts, confounder list, safety notice, states, nav
+│   ├── e2e/              Playwright core-loop test
+│   ├── screenshots/      Playwright capture (generates docs/screenshots)
 │   └── lib/api.ts        typed client
 └── PLAN.md               product thesis + phased build
 ```

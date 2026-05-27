@@ -120,7 +120,7 @@ export default function ReportPage({
         </Card>
       )}
 
-      <Card className="mb-4 border-accent bg-accent-soft">
+      <Card tone="accent" className="mb-4">
         <h3 className="mt-0 font-semibold">Recommendation</h3>
         <p className="m-0 text-[15px]">{report.recommendation}</p>
         <p className="mb-0 text-[13px] text-muted">Decision: {report.decision}</p>

@@ -250,7 +250,7 @@ export default function NewExperiment() {
       </Card>
 
       {warnings && warnings.length > 0 && (
-        <Card className="mb-4 border-warn">
+        <Card tone="warn" className="mb-4">
           <h3 className="mt-0 font-semibold text-warn">Heads up</h3>
           {warnings.map((w: SafetyWarning) => (
             <div key={w.code} className="mb-2 flex items-start gap-2">

@@ -2,17 +2,24 @@
 
 import React from "react";
 
+const CARD_TONES = {
+  default: "border-line bg-card",
+  accent: "border-accent bg-accent-soft",
+  warn: "border-warn bg-card",
+  danger: "border-bad bg-card",
+} as const;
+
 export function Card({
   children,
   className = "",
+  tone = "default",
 }: {
   children: React.ReactNode;
   className?: string;
+  tone?: keyof typeof CARD_TONES;
 }) {
   return (
-    <div
-      className={`rounded-xl border border-line bg-card p-[18px] ${className}`}
-    >
+    <div className={`rounded-xl border p-[18px] ${CARD_TONES[tone]} ${className}`}>
       {children}
     </div>
   );

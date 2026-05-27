@@ -59,7 +59,7 @@ export default function AccountPage() {
         {exportData.error && <p className="text-bad">Export failed.</p>}
       </Card>
 
-      <Card className="border-bad">
+      <Card tone="danger">
         <h3 className="mt-0 font-semibold text-bad">Delete all data</h3>
         <p className="text-sm text-muted">
           Permanently deletes every experiment, log, meal, and confounder. This
