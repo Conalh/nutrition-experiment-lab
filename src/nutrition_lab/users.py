@@ -57,3 +57,21 @@ def get_user(conn: DictConn, user_id: str) -> UserPublic | None:
         "SELECT * FROM app_user WHERE id = %s", (user_id,)
     ).fetchone()
     return _public(row) if row else None
+
+
+def current_epoch(conn: DictConn, user_id: str) -> int:
+    """The user's current session epoch (0 for a fresh account)."""
+    row = conn.execute(
+        "SELECT session_epoch FROM app_user WHERE id = %s", (user_id,)
+    ).fetchone()
+    return int(row["session_epoch"]) if row else 0
+
+
+def revoke_sessions(conn: DictConn, user_id: str) -> None:
+    """Bump the session epoch, invalidating every outstanding signed cookie
+    for this user (used on logout)."""
+    conn.execute(
+        "UPDATE app_user SET session_epoch = session_epoch + 1 WHERE id = %s",
+        (user_id,),
+    )
+    conn.commit()

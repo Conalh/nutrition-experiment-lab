@@ -74,16 +74,26 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 # ─── Session token ───────────────────────────────────────────────────
-def issue_session(user_id: str) -> str:
-    return _serializer().dumps(user_id)
+def issue_session(user_id: str, epoch: int) -> str:
+    """Sign a session token carrying the user id and their session epoch.
+    The epoch lets logout revoke all of a user's tokens by bumping it."""
+    return _serializer().dumps({"u": user_id, "e": epoch})
 
 
-def read_session(token: str | None) -> str | None:
-    """Return the user id from a session token, or None if missing/invalid/
-    expired."""
+def read_session(token: str | None) -> tuple[str, int] | None:
+    """Return (user_id, epoch) from a session token, or None if missing /
+    invalid / expired / malformed. This only verifies the signature and TTL;
+    the epoch is checked against the DB by the request dependency."""
     if not token:
         return None
     try:
-        return _serializer().loads(token, max_age=SESSION_MAX_AGE_SECONDS)
+        data = _serializer().loads(token, max_age=SESSION_MAX_AGE_SECONDS)
     except (BadSignature, SignatureExpired):
         return None
+    if not isinstance(data, dict):
+        return None
+    uid = data.get("u")
+    epoch = data.get("e")
+    if not isinstance(uid, str) or not isinstance(epoch, int):
+        return None
+    return uid, epoch

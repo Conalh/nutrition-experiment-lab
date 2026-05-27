@@ -190,6 +190,9 @@ def init_db(conn: DictConn | None = None) -> None:
 _MIGRATIONS = [
     "ALTER TABLE outcome_definition ADD COLUMN IF NOT EXISTS metric TEXT",
     "ALTER TABLE app_user ADD COLUMN IF NOT EXISTS password_hash TEXT",
+    # Session epoch: bumped on logout to revoke all of a user's signed
+    # session cookies (stateless tokens can't otherwise be invalidated).
+    "ALTER TABLE app_user ADD COLUMN IF NOT EXISTS session_epoch INTEGER NOT NULL DEFAULT 0",
 ]
 
 

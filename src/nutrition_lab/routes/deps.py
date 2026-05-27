@@ -23,10 +23,21 @@ def get_conn() -> Iterator[DictConn]:
         conn.close()
 
 
-def current_user_id(request: Request) -> str:
-    """The authenticated user id from the session cookie; 401 if absent."""
-    user_id = read_session(request.cookies.get(COOKIE_NAME))
-    if user_id is None:
+def current_user_id(request: Request, conn: DictConn = Depends(get_conn)) -> str:
+    """The authenticated user id from the signed session cookie. Verifies the
+    signature/TTL, then checks the cookie's epoch against the stored one so a
+    logged-out (revoked) token is rejected. 401 on any failure.
+
+    ``conn`` reuses the request's cached get_conn dependency, so this adds one
+    indexed lookup, not a second connection."""
+    session = read_session(request.cookies.get(COOKIE_NAME))
+    if session is None:
+        raise HTTPException(status_code=401, detail="Not authenticated.")
+    user_id, epoch = session
+    row = conn.execute(
+        "SELECT session_epoch FROM app_user WHERE id = %s", (user_id,)
+    ).fetchone()
+    if row is None or row["session_epoch"] != epoch:
         raise HTTPException(status_code=401, detail="Not authenticated.")
     return user_id
 

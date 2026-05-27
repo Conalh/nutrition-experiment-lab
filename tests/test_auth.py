@@ -46,6 +46,24 @@ def test_signup_login_logout_me(conn):
     )
 
 
+def test_logout_revokes_outstanding_tokens(conn):
+    """A token captured before logout must stop working after logout
+    (session-epoch revocation), not just be cleared from the browser."""
+    c = _fresh_client()
+    c.post("/api/auth/signup", json={"email": "rev@example.com", "password": "password123"})
+    token = c.cookies.get("nl_session")
+    assert token  # the signed session cookie
+    assert c.get("/api/auth/me").status_code == 200
+
+    c.post("/api/auth/logout")
+
+    # Replay the captured token on a fresh client → rejected.
+    stolen = _fresh_client()
+    stolen.cookies.set("nl_session", token)
+    assert stolen.get("/api/auth/me").status_code == 401
+    assert stolen.get("/api/experiments").status_code == 401
+
+
 def test_duplicate_email_rejected(conn):
     c = _fresh_client()
     body = {"email": "dup@example.com", "password": "password123"}

@@ -14,15 +14,15 @@ from ..auth import (
 from ..db import DictConn
 from ..models import LoginRequest, SignupRequest, UserPublic
 from ..users import AuthError
-from .deps import ConnDep
+from .deps import ConnDep, UserDep
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
-def _set_session(response: Response, user_id: str) -> None:
+def _set_session(response: Response, user_id: str, epoch: int) -> None:
     response.set_cookie(
         key=COOKIE_NAME,
-        value=issue_session(user_id),
+        value=issue_session(user_id, epoch),
         max_age=SESSION_MAX_AGE_SECONDS,
         httponly=True,
         samesite="lax",
@@ -39,7 +39,7 @@ def signup(
         user = users_svc.create_user(conn, data.email, data.password, data.display_name)
     except AuthError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
-    _set_session(response, user.id)
+    _set_session(response, user.id, users_svc.current_epoch(conn, user.id))
     return user
 
 
@@ -51,20 +51,28 @@ def login(
         user = users_svc.authenticate(conn, data.email, data.password)
     except AuthError as exc:
         raise HTTPException(status_code=401, detail=str(exc))
-    _set_session(response, user.id)
+    _set_session(response, user.id, users_svc.current_epoch(conn, user.id))
     return user
 
 
 @router.post("/logout")
-def logout(response: Response) -> dict[str, bool]:
-    response.delete_cookie(COOKIE_NAME, path="/")
+def logout(request: Request, response: Response, conn: DictConn = ConnDep) -> dict[str, bool]:
+    # Bump the session epoch so the outstanding token (and any copies of it)
+    # can no longer authenticate — then clear the cookie. Tolerant of an
+    # already-invalid cookie so logout always succeeds.
+    session = read_session(request.cookies.get(COOKIE_NAME))
+    if session is not None:
+        users_svc.revoke_sessions(conn, session[0])
+    response.delete_cookie(
+        COOKIE_NAME, path="/", httponly=True, samesite="lax", secure=COOKIE_SECURE
+    )
     return {"ok": True}
 
 
 @router.get("/me", response_model=UserPublic)
-def me(request: Request, conn: DictConn = ConnDep) -> UserPublic:
-    user_id = read_session(request.cookies.get(COOKIE_NAME))
-    user = users_svc.get_user(conn, user_id) if user_id else None
+def me(conn: DictConn = ConnDep, user_id: str = UserDep) -> UserPublic:
+    # UserDep already validated the signature, TTL, and session epoch.
+    user = users_svc.get_user(conn, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="Not authenticated.")
     return user
