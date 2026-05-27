@@ -5,15 +5,9 @@
 export function SafetyNotice({ compact = false }: { compact?: boolean }) {
   return (
     <div
-      style={{
-        border: "1px solid var(--border)",
-        background: "var(--surface-2)",
-        borderRadius: 10,
-        padding: compact ? "8px 12px" : "12px 14px",
-        fontSize: compact ? 12 : 13,
-        color: "var(--text-dim)",
-        marginBottom: 16,
-      }}
+      className={`mb-4 rounded-lg border border-line bg-surface text-muted ${
+        compact ? "px-3 py-2 text-xs" : "px-3.5 py-3 text-[13px]"
+      }`}
     >
       This is a personal learning tool, not medical advice. It does not
       diagnose, treat, or manage any medical condition. Avoid extreme

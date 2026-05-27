@@ -13,32 +13,12 @@ const LINKS = [
 export function NavBar() {
   const pathname = usePathname();
   return (
-    <nav
-      style={{
-        borderBottom: "1px solid var(--border)",
-        background: "var(--surface-2)",
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 960,
-          margin: "0 auto",
-          padding: "12px 20px",
-          display: "flex",
-          alignItems: "center",
-          gap: 20,
-        }}
-      >
-        <Link
-          href="/"
-          style={{ fontWeight: 700, color: "var(--accent)", fontSize: 15 }}
-        >
+    <nav className="sticky top-0 z-10 border-b border-line bg-surface">
+      <div className="mx-auto flex max-w-3xl items-center gap-5 px-5 py-3">
+        <Link href="/" className="text-[15px] font-bold text-accent">
           Nutrition Lab
         </Link>
-        <div style={{ display: "flex", gap: 16, marginLeft: "auto" }}>
+        <div className="ml-auto flex gap-4">
           {LINKS.map((l) => {
             const active =
               l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
@@ -46,11 +26,9 @@ export function NavBar() {
               <Link
                 key={l.href}
                 href={l.href}
-                style={{
-                  fontSize: 14,
-                  color: active ? "var(--text)" : "var(--text-dim)",
-                  fontWeight: active ? 600 : 400,
-                }}
+                className={`text-sm ${
+                  active ? "font-semibold text-ink" : "text-muted hover:text-ink"
+                }`}
               >
                 {l.label}
               </Link>

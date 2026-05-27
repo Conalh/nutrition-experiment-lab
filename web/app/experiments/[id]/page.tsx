@@ -10,8 +10,9 @@ import {
   Card,
   Field,
   confidenceTone,
-  inputStyle,
+  inputClass,
 } from "@/components/ui";
+import { ErrorState, Loading } from "@/components/states";
 import { OutcomeChart } from "@/components/outcome-chart";
 import { ConfounderList } from "@/components/confounder-list";
 
@@ -79,39 +80,26 @@ export default function ExperimentDetail({
     },
   });
 
-  if (isLoading) return <p style={{ color: "var(--text-dim)" }}>Loading…</p>;
+  if (isLoading) return <Loading />;
   if (error || !data)
-    return <p style={{ color: "var(--bad)" }}>Could not load experiment.</p>;
+    return <ErrorState message="Could not load experiment." />;
 
   const { experiment: exp, interventions, outcomes } = data;
 
   return (
     <div>
-      <Link href="/" style={{ color: "var(--text-dim)", fontSize: 13 }}>
+      <Link href="/" className="text-[13px] text-muted">
         ← Dashboard
       </Link>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "start",
-          margin: "8px 0 20px",
-          gap: 12,
-        }}
-      >
+      <div className="my-2 flex items-start justify-between gap-3">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            {exp.title}
-          </h1>
-          <p style={{ color: "var(--text-dim)", margin: "4px 0 0" }}>
-            {exp.question}
-          </p>
+          <h1 className="m-0 text-2xl font-bold">{exp.title}</h1>
+          <p className="mt-1 text-muted">{exp.question}</p>
         </div>
         <Badge tone="accent">{exp.status}</Badge>
       </div>
 
-      {/* Lifecycle actions */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+      <div className="mb-5 flex flex-wrap gap-2">
         {exp.status === "draft" && (
           <Button onClick={() => lifecycle.mutate("start")}>Start</Button>
         )}
@@ -120,9 +108,7 @@ export default function ExperimentDetail({
             <Button variant="ghost" onClick={() => lifecycle.mutate("pause")}>
               Pause
             </Button>
-            <Button onClick={() => lifecycle.mutate("complete")}>
-              Complete
-            </Button>
+            <Button onClick={() => lifecycle.mutate("complete")}>Complete</Button>
           </>
         )}
         {exp.status === "paused" && (
@@ -135,71 +121,64 @@ export default function ExperimentDetail({
         )}
       </div>
       {lifecycle.error && (
-        <p style={{ color: "var(--bad)" }}>
-          {lifecycle.error instanceof Error ? lifecycle.error.message : "Error"}
-        </p>
+        <div className="mb-4">
+          <ErrorState
+            message={
+              lifecycle.error instanceof Error
+                ? lifecycle.error.message
+                : "Error"
+            }
+          />
+        </div>
       )}
 
-      {/* Protocol */}
-      <Card style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Protocol</h3>
+      <Card className="mb-4">
+        <h3 className="mt-0 font-semibold">Protocol</h3>
         {exp.hypothesis && (
-          <p style={{ fontSize: 14 }}>
-            <span style={{ color: "var(--text-dim)" }}>Hypothesis: </span>
+          <p className="text-sm">
+            <span className="text-muted">Hypothesis: </span>
             {exp.hypothesis}
           </p>
         )}
-        <div style={{ fontSize: 13, color: "var(--text-dim)", marginBottom: 10 }}>
-          Baseline {exp.baseline_start} → {exp.baseline_end} · Intervention{" "}
-          {exp.intervention_start} → {exp.intervention_end}
+        <div className="mb-2.5 text-[13px] text-muted">
+          Baseline {exp.baseline_start} → {exp.baseline_end}
+          {exp.washout_start && ` · Washout ${exp.washout_start} → ${exp.washout_end}`}
+          {" · "}Intervention {exp.intervention_start} → {exp.intervention_end}
         </div>
         {interventions.map((iv) => (
-          <div key={iv.id} style={{ marginBottom: 8 }}>
-            <strong>{iv.name}</strong>{" "}
-            <Badge tone="neutral">{iv.category}</Badge>
-            <div style={{ fontSize: 14, color: "var(--text-dim)" }}>
-              {iv.rule_text}
-            </div>
+          <div key={iv.id} className="mb-2">
+            <strong>{iv.name}</strong> <Badge tone="neutral">{iv.category}</Badge>
+            <div className="text-sm text-muted">{iv.rule_text}</div>
           </div>
         ))}
-        <div style={{ marginTop: 8, fontSize: 13 }}>
-          <span style={{ color: "var(--text-dim)" }}>Outcomes: </span>
+        <div className="mt-2 text-[13px]">
+          <span className="text-muted">Outcomes: </span>
           {outcomes.map((o) => (
-            <span key={o.id} style={{ marginRight: 10 }}>
+            <span key={o.id} className="mr-2.5">
               {o.name}
-              {o.is_primary && (
-                <span style={{ color: "var(--accent)" }}> (primary)</span>
-              )}
+              {o.is_primary && <span className="text-accent"> (primary)</span>}
             </span>
           ))}
         </div>
       </Card>
 
-      {/* Analysis */}
-      <Card style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 12,
-          }}
-        >
-          <h3 style={{ margin: 0 }}>Analysis</h3>
+      <Card className="mb-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="m-0 font-semibold">Analysis</h3>
           <Button onClick={() => analyze.mutate()} disabled={analyze.isPending}>
             {analyze.isPending ? "Analyzing…" : "Run analysis"}
           </Button>
         </div>
 
         {!analysis && (
-          <p style={{ color: "var(--text-dim)", fontSize: 14 }}>
+          <p className="text-sm text-muted">
             No analysis yet. Run it once you have logged some days.
           </p>
         )}
 
         {analysis && (
           <>
-            <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+            <div className="mb-3.5 flex gap-2.5">
               <Badge tone={confidenceTone(analysis.confidence)}>
                 {analysis.confidence} confidence
               </Badge>
@@ -216,68 +195,48 @@ export default function ExperimentDetail({
             ))}
 
             {analysis.confounder_flags.length > 0 && (
-              <div style={{ marginTop: 10 }}>
+              <div className="mt-2.5">
                 {analysis.confounder_flags.map((f) => (
-                  <div
-                    key={f.code}
-                    style={{ display: "flex", gap: 8, marginBottom: 6 }}
-                  >
+                  <div key={f.code} className="mb-1.5 flex gap-2">
                     <Badge tone={f.severity === "high" ? "bad" : "warn"}>
                       flag
                     </Badge>
-                    <span style={{ fontSize: 13 }}>{f.message}</span>
+                    <span className="text-[13px]">{f.message}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div
-              style={{
-                marginTop: 14,
-                padding: 12,
-                background: "var(--surface-2)",
-                borderRadius: 8,
-                fontSize: 14,
-              }}
-            >
+            <div className="mt-3.5 rounded-lg bg-surface p-3 text-sm">
               <strong>Recommendation:</strong> {analysis.recommendation}
             </div>
           </>
         )}
       </Card>
 
-      {/* Confounders */}
       <Card>
-        <h3 style={{ marginTop: 0 }}>Confounders</h3>
+        <h3 className="mt-0 font-semibold">Confounders</h3>
         <ConfounderList items={confounders ?? []} />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 2fr auto",
-            gap: 8,
-            alignItems: "end",
-            marginTop: 14,
-          }}
-        >
+        <div className="mt-3.5 grid grid-cols-[1fr_1fr_1fr_2fr_auto] items-end gap-2">
           <Field label="Date">
-            <input type="date" style={inputStyle} value={cfDate} onChange={(e) => setCfDate(e.target.value)} />
+            <input type="date" className={inputClass} value={cfDate} onChange={(e) => setCfDate(e.target.value)} />
           </Field>
           <Field label="Kind">
-            <select style={inputStyle} value={cfKind} onChange={(e) => setCfKind(e.target.value)}>
+            <select className={inputClass} value={cfKind} onChange={(e) => setCfKind(e.target.value)}>
               {CONFOUNDER_KINDS.map((k) => (
                 <option key={k} value={k}>{k.replace("_", " ")}</option>
               ))}
             </select>
           </Field>
           <Field label="Severity">
-            <select style={inputStyle} value={cfSeverity} onChange={(e) => setCfSeverity(e.target.value as Severity)}>
+            <select className={inputClass} value={cfSeverity} onChange={(e) => setCfSeverity(e.target.value as Severity)}>
               <option value="low">low</option>
               <option value="medium">medium</option>
               <option value="high">high</option>
             </select>
           </Field>
           <Field label="Notes">
-            <input style={inputStyle} value={cfNotes} onChange={(e) => setCfNotes(e.target.value)} />
+            <input className={inputClass} value={cfNotes} onChange={(e) => setCfNotes(e.target.value)} />
           </Field>
           <Button onClick={() => addConfounder.mutate()} disabled={!cfDate || addConfounder.isPending}>
             Add

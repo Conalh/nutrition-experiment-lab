@@ -13,18 +13,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen bg-base text-ink antialiased">
         <Providers>
           <NavBar />
-          <main
-            style={{
-              maxWidth: 960,
-              margin: "0 auto",
-              padding: "24px 20px 80px",
-            }}
-          >
-            {children}
-          </main>
+          <main className="mx-auto max-w-3xl px-5 pb-20 pt-6">{children}</main>
         </Providers>
       </body>
     </html>

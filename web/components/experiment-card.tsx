@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Experiment } from "@/lib/api";
-import { Badge, Card } from "./ui";
+import { Badge } from "./ui";
 
 function currentPhase(exp: Experiment): string {
   if (exp.status === "draft") return "Not started";
@@ -31,38 +31,21 @@ const STATUS_TONE: Record<
 
 export function ExperimentCard({ exp }: { exp: Experiment }) {
   return (
-    <Link href={`/experiments/${exp.id}`} style={{ display: "block" }}>
-      <Card
-        style={{
-          marginBottom: 12,
-          transition: "border-color .15s",
-          cursor: "pointer",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "start",
-            gap: 12,
-          }}
-        >
+    <Link href={`/experiments/${exp.id}`} className="block">
+      <div className="mb-3 cursor-pointer rounded-xl border border-line bg-card p-[18px] transition hover:border-muted">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>
-              {exp.title}
-            </div>
-            <div style={{ color: "var(--text-dim)", fontSize: 14 }}>
-              {exp.question}
-            </div>
+            <div className="mb-1 text-base font-semibold">{exp.title}</div>
+            <div className="text-sm text-muted">{exp.question}</div>
           </div>
-          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          <div className="flex shrink-0 gap-2">
             <Badge tone="neutral">{currentPhase(exp)}</Badge>
             <Badge tone={STATUS_TONE[exp.status] ?? "neutral"}>
               {exp.status}
             </Badge>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 }

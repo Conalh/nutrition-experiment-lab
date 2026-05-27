@@ -2,38 +2,27 @@
 
 import React from "react";
 
-const COLORS = {
-  surface: "var(--surface)",
-  card: "var(--card)",
-  border: "var(--border)",
-  text: "var(--text)",
-  dim: "var(--text-dim)",
-  accent: "var(--accent)",
-  warn: "var(--warn)",
-  bad: "var(--bad)",
-};
-
 export function Card({
   children,
-  style,
+  className = "",
 }: {
   children: React.ReactNode;
-  style?: React.CSSProperties;
+  className?: string;
 }) {
   return (
     <div
-      style={{
-        background: COLORS.card,
-        border: `1px solid ${COLORS.border}`,
-        borderRadius: 12,
-        padding: 18,
-        ...style,
-      }}
+      className={`rounded-xl border border-line bg-card p-[18px] ${className}`}
     >
       {children}
     </div>
   );
 }
+
+const BUTTON_VARIANTS = {
+  primary: "bg-accent text-[#0a0d10] font-semibold hover:brightness-110",
+  ghost: "border border-line text-ink hover:bg-surface",
+  danger: "border border-bad text-bad hover:bg-bad-soft",
+} as const;
 
 export function Button({
   children,
@@ -41,46 +30,30 @@ export function Button({
   variant = "primary",
   type = "button",
   disabled,
+  className = "",
 }: {
   children: React.ReactNode;
   onClick?: () => void;
-  variant?: "primary" | "ghost" | "danger";
+  variant?: keyof typeof BUTTON_VARIANTS;
   type?: "button" | "submit";
   disabled?: boolean;
+  className?: string;
 }) {
-  const styles: Record<string, React.CSSProperties> = {
-    primary: { background: COLORS.accent, color: "#0a0d10", fontWeight: 600 },
-    ghost: {
-      background: "transparent",
-      color: COLORS.text,
-      border: `1px solid ${COLORS.border}`,
-    },
-    danger: {
-      background: "transparent",
-      color: COLORS.bad,
-      border: `1px solid var(--bad)`,
-    },
-  };
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      style={{
-        padding: "8px 14px",
-        borderRadius: 8,
-        border: "none",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
-        fontSize: 14,
-        ...styles[variant],
-      }}
+      className={`rounded-lg px-3.5 py-2 text-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_VARIANTS[variant]} ${className}`}
     >
       {children}
     </button>
   );
 }
 
+/** A labelled single form control. The <label> wraps the input so clicking
+ * the label focuses it — correct for one control, wrong for button groups
+ * (see FieldGroup). */
 export function Field({
   label,
   children,
@@ -91,54 +64,56 @@ export function Field({
   hint?: string;
 }) {
   return (
-    <label style={{ display: "block", marginBottom: 14 }}>
-      <div style={{ fontSize: 13, color: COLORS.dim, marginBottom: 6 }}>
-        {label}
-      </div>
+    <label className="mb-3.5 block">
+      <span className="mb-1.5 block text-[13px] text-muted">{label}</span>
       {children}
-      {hint && (
-        <div style={{ fontSize: 12, color: COLORS.dim, marginTop: 4 }}>
-          {hint}
-        </div>
-      )}
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
   );
 }
 
-export const inputStyle: React.CSSProperties = {
-  width: "100%",
-  background: "var(--surface-2)",
-  border: `1px solid ${COLORS.border}`,
-  borderRadius: 8,
-  padding: "8px 10px",
-  color: COLORS.text,
-  fontSize: 14,
-};
+/** A labelled group of controls (radio-like buttons). Uses a heading +
+ * group role rather than a wrapping <label>, so each button keeps its own
+ * accessible name instead of inheriting the whole group's text. */
+export function FieldGroup({
+  label,
+  children,
+  hint,
+}: {
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="mb-3.5" role="group" aria-label={label}>
+      <div className="mb-1.5 text-[13px] text-muted">{label}</div>
+      {children}
+      {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
+    </div>
+  );
+}
+
+export const inputClass =
+  "w-full rounded-lg border border-line bg-surface px-2.5 py-2 text-sm text-ink outline-none focus:border-accent";
+
+const BADGE_TONES = {
+  neutral: "bg-surface text-muted",
+  good: "bg-accent-soft text-accent",
+  accent: "bg-accent-soft text-accent",
+  warn: "bg-warn-soft text-warn",
+  bad: "bg-bad-soft text-bad",
+} as const;
 
 export function Badge({
   children,
   tone = "neutral",
 }: {
   children: React.ReactNode;
-  tone?: "neutral" | "good" | "warn" | "bad" | "accent";
+  tone?: keyof typeof BADGE_TONES;
 }) {
-  const tones: Record<string, React.CSSProperties> = {
-    neutral: { background: "var(--surface-2)", color: COLORS.dim },
-    good: { background: "var(--accent-dim)", color: COLORS.accent },
-    accent: { background: "var(--accent-dim)", color: COLORS.accent },
-    warn: { background: "#3a2f10", color: COLORS.warn },
-    bad: { background: "#3a1818", color: COLORS.bad },
-  };
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "2px 9px",
-        borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 500,
-        ...tones[tone],
-      }}
+      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${BADGE_TONES[tone]}`}
     >
       {children}
     </span>

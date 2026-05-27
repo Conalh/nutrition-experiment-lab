@@ -9,7 +9,8 @@ import {
   type OutcomeDirection,
   type SafetyWarning,
 } from "@/lib/api";
-import { Badge, Button, Card, Field, inputStyle } from "@/components/ui";
+import { Badge, Button, Card, Field, inputClass } from "@/components/ui";
+import { ErrorState } from "@/components/states";
 import { SafetyNotice } from "@/components/safety-notice";
 
 const METRICS: { value: Metric; label: string; numeric?: boolean }[] = [
@@ -43,6 +44,9 @@ export default function NewExperiment() {
   const [baselineEnd, setBaselineEnd] = useState("");
   const [intvStart, setIntvStart] = useState("");
   const [intvEnd, setIntvEnd] = useState("");
+  const [useWashout, setUseWashout] = useState(false);
+  const [washoutStart, setWashoutStart] = useState("");
+  const [washoutEnd, setWashoutEnd] = useState("");
   const [intvName, setIntvName] = useState("");
   const [intvRule, setIntvRule] = useState("");
   const [outcomes, setOutcomes] = useState<OutcomeDraft[]>([
@@ -106,14 +110,13 @@ export default function NewExperiment() {
         hypothesis: hypothesis || null,
         baseline_start: baselineStart || null,
         baseline_end: baselineEnd || null,
+        washout_start: useWashout ? washoutStart || null : null,
+        washout_end: useWashout ? washoutEnd || null : null,
         intervention_start: intvStart || null,
         intervention_end: intvEnd || null,
       });
       if (intvName.trim() && intvRule.trim()) {
-        await api.addIntervention(exp.id, {
-          name: intvName,
-          rule_text: intvRule,
-        });
+        await api.addIntervention(exp.id, { name: intvName, rule_text: intvRule });
       }
       for (const o of outcomes.filter((o) => o.name.trim())) {
         await api.addOutcome(exp.id, {
@@ -126,9 +129,7 @@ export default function NewExperiment() {
           is_primary: o.is_primary,
         });
       }
-      if (startNow) {
-        await api.lifecycle(exp.id, "start");
-      }
+      if (startNow) await api.lifecycle(exp.id, "start");
       router.push(`/experiments/${exp.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -138,19 +139,15 @@ export default function NewExperiment() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>
-        Design an experiment
-      </h1>
-      <p style={{ color: "var(--text-dim)", marginTop: 0 }}>
-        Ask one clear question and change one thing.
-      </p>
+      <h1 className="text-2xl font-bold">Design an experiment</h1>
+      <p className="mt-0 text-muted">Ask one clear question and change one thing.</p>
 
       <SafetyNotice />
 
-      <Card style={{ marginBottom: 16 }}>
+      <Card className="mb-4">
         <Field label="Title">
           <input
-            style={inputStyle}
+            className={inputClass}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Higher-protein breakfast vs afternoon hunger"
@@ -158,7 +155,7 @@ export default function NewExperiment() {
         </Field>
         <Field label="Question">
           <input
-            style={inputStyle}
+            className={inputClass}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Does a higher-protein breakfast reduce my afternoon hunger?"
@@ -166,97 +163,114 @@ export default function NewExperiment() {
         </Field>
         <Field label="Hypothesis (optional)">
           <textarea
-            style={{ ...inputStyle, minHeight: 60 }}
+            className={`${inputClass} min-h-[60px]`}
             value={hypothesis}
             onChange={(e) => setHypothesis(e.target.value)}
           />
         </Field>
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Windows</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <Card className="mb-4">
+        <h3 className="mt-0 font-semibold">Windows</h3>
+        <div className="grid grid-cols-2 gap-3">
           <Field label="Baseline start">
-            <input type="date" style={inputStyle} value={baselineStart} onChange={(e) => setBaselineStart(e.target.value)} />
+            <input type="date" className={inputClass} value={baselineStart} onChange={(e) => setBaselineStart(e.target.value)} />
           </Field>
           <Field label="Baseline end">
-            <input type="date" style={inputStyle} value={baselineEnd} onChange={(e) => setBaselineEnd(e.target.value)} />
+            <input type="date" className={inputClass} value={baselineEnd} onChange={(e) => setBaselineEnd(e.target.value)} />
           </Field>
           <Field label="Intervention start">
-            <input type="date" style={inputStyle} value={intvStart} onChange={(e) => setIntvStart(e.target.value)} />
+            <input type="date" className={inputClass} value={intvStart} onChange={(e) => setIntvStart(e.target.value)} />
           </Field>
           <Field label="Intervention end" hint={intvDays ? `${intvDays} days` : undefined}>
-            <input type="date" style={inputStyle} value={intvEnd} onChange={(e) => setIntvEnd(e.target.value)} />
+            <input type="date" className={inputClass} value={intvEnd} onChange={(e) => setIntvEnd(e.target.value)} />
           </Field>
         </div>
+
+        <label className="mt-1 flex items-center gap-2 text-[13px] text-muted">
+          <input
+            type="checkbox"
+            checked={useWashout}
+            onChange={(e) => setUseWashout(e.target.checked)}
+          />
+          Add a washout period between baseline and intervention
+        </label>
+        {useWashout && (
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <Field label="Washout start">
+              <input type="date" className={inputClass} value={washoutStart} onChange={(e) => setWashoutStart(e.target.value)} />
+            </Field>
+            <Field label="Washout end">
+              <input type="date" className={inputClass} value={washoutEnd} onChange={(e) => setWashoutEnd(e.target.value)} />
+            </Field>
+          </div>
+        )}
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Intervention</h3>
+      <Card className="mb-4">
+        <h3 className="mt-0 font-semibold">Intervention</h3>
         <Field label="Name">
-          <input style={inputStyle} value={intvName} onChange={(e) => setIntvName(e.target.value)} placeholder="40g protein breakfast" />
+          <input className={inputClass} value={intvName} onChange={(e) => setIntvName(e.target.value)} placeholder="40g protein breakfast" />
         </Field>
         <Field label="Rule" hint="What exactly will you change? Keep it to one variable.">
-          <textarea style={{ ...inputStyle, minHeight: 60 }} value={intvRule} onChange={(e) => setIntvRule(e.target.value)} placeholder="Eat at least 40g of protein within an hour of waking." />
+          <textarea className={`${inputClass} min-h-[60px]`} value={intvRule} onChange={(e) => setIntvRule(e.target.value)} placeholder="Eat at least 40g of protein within an hour of waking." />
         </Field>
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0 }}>Outcomes</h3>
+      <Card className="mb-4">
+        <div className="flex items-center justify-between">
+          <h3 className="m-0 font-semibold">Outcomes</h3>
           <Button variant="ghost" onClick={addOutcome}>+ Add</Button>
         </div>
         {outcomes.map((o, i) => (
           <div
             key={i}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.4fr 1fr 1fr auto auto",
-              gap: 8,
-              alignItems: "center",
-              marginTop: 12,
-            }}
+            className="mt-3 grid grid-cols-[1.4fr_1fr_1fr_auto_auto] items-center gap-2"
           >
-            <input style={inputStyle} value={o.name} placeholder="Outcome name" onChange={(e) => updateOutcome(i, { name: e.target.value })} />
-            <select style={inputStyle} value={o.metric} onChange={(e) => updateOutcome(i, { metric: e.target.value as Metric })}>
+            <input className={inputClass} value={o.name} placeholder="Outcome name" onChange={(e) => updateOutcome(i, { name: e.target.value })} />
+            <select className={inputClass} value={o.metric} onChange={(e) => updateOutcome(i, { metric: e.target.value as Metric })}>
               {METRICS.map((m) => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
-            <select style={inputStyle} value={o.direction} onChange={(e) => updateOutcome(i, { direction: e.target.value as OutcomeDirection })}>
+            <select className={inputClass} value={o.direction} onChange={(e) => updateOutcome(i, { direction: e.target.value as OutcomeDirection })}>
               <option value="higher_better">Higher better</option>
               <option value="lower_better">Lower better</option>
               <option value="target_range">Target range</option>
             </select>
-            <label style={{ fontSize: 12, color: "var(--text-dim)", display: "flex", gap: 4, alignItems: "center" }}>
+            <label className="flex items-center gap-1 text-xs text-muted">
               <input type="radio" name="primary" checked={o.is_primary} onChange={() => setPrimary(i)} />
               primary
             </label>
             {outcomes.length > 1 && (
-              <button onClick={() => removeOutcome(i)} style={{ background: "none", border: "none", color: "var(--bad)", cursor: "pointer" }}>×</button>
+              <button onClick={() => removeOutcome(i)} className="cursor-pointer border-none bg-transparent text-bad">×</button>
             )}
           </div>
         ))}
       </Card>
 
       {warnings && warnings.length > 0 && (
-        <Card style={{ marginBottom: 16, borderColor: "var(--warn)" }}>
-          <h3 style={{ marginTop: 0, color: "var(--warn)" }}>Heads up</h3>
+        <Card className="mb-4 border-warn">
+          <h3 className="mt-0 font-semibold text-warn">Heads up</h3>
           {warnings.map((w: SafetyWarning) => (
-            <div key={w.code} style={{ marginBottom: 8, display: "flex", gap: 8, alignItems: "start" }}>
+            <div key={w.code} className="mb-2 flex items-start gap-2">
               <Badge tone={w.severity === "high" ? "bad" : "warn"}>{w.severity}</Badge>
-              <span style={{ fontSize: 14 }}>{w.message}</span>
+              <span className="text-sm">{w.message}</span>
             </div>
           ))}
-          <p style={{ fontSize: 12, color: "var(--text-dim)", margin: 0 }}>
+          <p className="m-0 text-xs text-muted">
             These are advisory — you can still proceed.
           </p>
         </Card>
       )}
 
-      {error && <p style={{ color: "var(--bad)" }}>{error}</p>}
+      {error && (
+        <div className="mb-4">
+          <ErrorState message={error} />
+        </div>
+      )}
 
-      <div style={{ display: "flex", gap: 10 }}>
+      <div className="flex gap-2.5">
         <Button onClick={() => submit(true)} disabled={submitting}>
           {submitting ? "Saving…" : "Create & start"}
         </Button>

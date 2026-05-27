@@ -42,7 +42,7 @@ test("create, log, analyze, and report an experiment", async ({ page }) => {
   // 4. Daily log: select our experiment, rate, set adherence, save
   await page.goto("/log");
   await page.locator("select").first().selectOption({ label: title });
-  await page.getByRole("button", { name: "4", exact: true }).first().click();
+  await page.getByRole("button", { name: "Hunger 4" }).click();
   await page.locator("button", { hasText: /^yes$/ }).click();
   await page.getByRole("button", { name: "Save day" }).click();
   await expect(page.getByText(/Saved/)).toBeVisible();

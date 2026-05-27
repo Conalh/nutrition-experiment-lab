@@ -21,78 +21,40 @@ export function OutcomeChart({ c }: { c: OutcomeComparison }) {
     value: number | null;
     color: string;
   }) => (
-    <div style={{ marginBottom: 8 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: 12,
-          color: "var(--text-dim)",
-          marginBottom: 3,
-        }}
-      >
+    <div className="mb-2">
+      <div className="mb-1 flex justify-between text-xs text-muted">
         <span>{label}</span>
         <span>{value ?? "—"}</span>
       </div>
-      <div
-        style={{
-          background: "var(--surface-2)",
-          borderRadius: 6,
-          height: 18,
-          overflow: "hidden",
-        }}
-      >
+      <div className="h-[18px] overflow-hidden rounded-md bg-surface">
         <div
-          style={{
-            width: `${pct(value)}%`,
-            height: "100%",
-            background: color,
-            transition: "width .3s",
-          }}
+          className={`h-full transition-[width] duration-300 ${color}`}
+          style={{ width: `${pct(value)}%` }}
         />
       </div>
     </div>
   );
 
   return (
-    <div
-      style={{
-        padding: 14,
-        border: "1px solid var(--border)",
-        borderRadius: 10,
-        marginBottom: 10,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 10,
-        }}
-      >
+    <div className="mb-2.5 rounded-[10px] border border-line p-3.5">
+      <div className="mb-2.5 flex items-center justify-between">
         <strong>
           {c.name}
           {c.is_primary && (
-            <span style={{ color: "var(--accent)", marginLeft: 8, fontSize: 12 }}>
-              PRIMARY
-            </span>
+            <span className="ml-2 text-xs text-accent">PRIMARY</span>
           )}
         </strong>
         <Badge tone={resultTone(c.result)}>{c.result}</Badge>
       </div>
-      <Bar label="Baseline" value={c.baseline_mean} color="var(--text-dim)" />
-      <Bar
-        label="Intervention"
-        value={c.intervention_mean}
-        color="var(--accent)"
-      />
-      <div style={{ fontSize: 12, color: "var(--text-dim)", marginTop: 6 }}>
+      <Bar label="Baseline" value={c.baseline_mean} color="bg-muted" />
+      <Bar label="Intervention" value={c.intervention_mean} color="bg-accent" />
+      <div className="mt-1.5 text-xs text-muted">
         {c.absolute_change != null && (
           <>
             Change: {c.absolute_change > 0 ? "+" : ""}
             {c.absolute_change}
-            {c.percent_change != null && ` (${c.percent_change > 0 ? "+" : ""}${c.percent_change}%)`}
+            {c.percent_change != null &&
+              ` (${c.percent_change > 0 ? "+" : ""}${c.percent_change}%)`}
             {" · "}
           </>
         )}

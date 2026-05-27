@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type Adherence } from "@/lib/api";
-import { Button, Card, Field, inputStyle } from "@/components/ui";
+import { Button, Card, Field, FieldGroup, inputClass } from "@/components/ui";
+import { EmptyState, Loading } from "@/components/states";
 
 const RATINGS: { key: string; label: string }[] = [
   { key: "hunger", label: "Hunger" },
@@ -25,25 +26,19 @@ function RatingRow({
   onChange: (v: number) => void;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", marginBottom: 10 }}>
-      <div style={{ width: 150, color: "var(--text-dim)", fontSize: 14 }}>
-        {label}
-      </div>
-      <div style={{ display: "flex", gap: 6 }}>
+    <div className="mb-2.5 flex items-center" role="group" aria-label={label}>
+      <div className="w-[150px] text-sm text-muted">{label}</div>
+      <div className="flex gap-1.5">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             key={n}
+            aria-label={`${label} ${n}`}
             onClick={() => onChange(n)}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              border: "1px solid var(--border)",
-              background: value === n ? "var(--accent)" : "var(--surface-2)",
-              color: value === n ? "#0a0d10" : "var(--text)",
-              cursor: "pointer",
-              fontWeight: value === n ? 700 : 400,
-            }}
+            className={`h-9 w-9 rounded-lg border border-line ${
+              value === n
+                ? "bg-accent font-bold text-[#0a0d10]"
+                : "bg-surface text-ink"
+            }`}
           >
             {n}
           </button>
@@ -64,7 +59,7 @@ export default function DailyLogPage() {
   const [meal, setMeal] = useState("");
   const [saved, setSaved] = useState(false);
 
-  const { data: experiments } = useQuery({
+  const { data: experiments, isLoading } = useQuery({
     queryKey: ["experiments"],
     queryFn: api.listExperiments,
   });
@@ -76,7 +71,6 @@ export default function DailyLogPage() {
     if (!expId && active.length > 0) setExpId(active[0].id);
   }, [active, expId]);
 
-  // Load any existing log for this experiment+date.
   const { data: existing } = useQuery({
     queryKey: ["daily-log", expId, date],
     queryFn: () => api.getDailyLog(expId, date),
@@ -131,40 +125,40 @@ export default function DailyLogPage() {
     },
   });
 
+  if (isLoading) return <Loading />;
+
   if (active.length === 0) {
     return (
       <div>
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Daily log</h1>
-        <p style={{ color: "var(--text-dim)" }}>
-          No active experiment. Start one to begin logging.
-        </p>
+        <h1 className="mb-4 text-2xl font-bold">Daily log</h1>
+        <EmptyState title="No active experiment">
+          Start one to begin logging.
+        </EmptyState>
       </div>
     );
   }
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 16 }}>
-        Daily log
-      </h1>
+      <h1 className="mb-4 text-2xl font-bold">Daily log</h1>
 
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+      <Card className="mb-4">
+        <div className="grid grid-cols-[2fr_1fr] gap-3">
           <Field label="Experiment">
-            <select style={inputStyle} value={expId} onChange={(e) => setExpId(e.target.value)}>
+            <select className={inputClass} value={expId} onChange={(e) => setExpId(e.target.value)}>
               {active.map((e) => (
                 <option key={e.id} value={e.id}>{e.title}</option>
               ))}
             </select>
           </Field>
           <Field label="Date">
-            <input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} />
+            <input type="date" className={inputClass} value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
         </div>
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>How did today feel? (1–5)</h3>
+      <Card className="mb-4">
+        <h3 className="mt-0 font-semibold">How did today feel? (1–5)</h3>
         {RATINGS.map((r) => (
           <RatingRow
             key={r.key}
@@ -175,48 +169,44 @@ export default function DailyLogPage() {
         ))}
       </Card>
 
-      <Card style={{ marginBottom: 16 }}>
-        <Field label="Adherence to the intervention">
-          <div style={{ display: "flex", gap: 8 }}>
+      <Card className="mb-4">
+        <FieldGroup label="Adherence to the intervention">
+          <div className="flex gap-2">
             {ADHERENCE.map((a) => (
               <button
                 key={a}
                 onClick={() => setAdherence(a)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  border: "1px solid var(--border)",
-                  background: adherence === a ? "var(--accent)" : "var(--surface-2)",
-                  color: adherence === a ? "#0a0d10" : "var(--text)",
-                  cursor: "pointer",
-                  fontSize: 13,
-                }}
+                className={`rounded-lg border border-line px-3 py-1.5 text-[13px] ${
+                  adherence === a
+                    ? "bg-accent text-[#0a0d10]"
+                    : "bg-surface text-ink"
+                }`}
               >
                 {a.replace("_", " ")}
               </button>
             ))}
           </div>
-        </Field>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 12 }}>
+        </FieldGroup>
+        <div className="grid grid-cols-[1fr_2fr] gap-3">
           <Field label="Body weight (optional)">
-            <input style={inputStyle} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="kg" />
+            <input className={inputClass} value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="kg" />
           </Field>
           <Field label="Add a meal (optional)">
-            <input style={inputStyle} value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="Greek yogurt, whey, berries" />
+            <input className={inputClass} value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="Greek yogurt, whey, berries" />
           </Field>
         </div>
         <Field label="Notes">
-          <textarea style={{ ...inputStyle, minHeight: 50 }} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <textarea className={`${inputClass} min-h-[50px]`} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </Card>
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+      <div className="flex items-center gap-3">
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           {save.isPending ? "Saving…" : "Save day"}
         </Button>
-        {saved && <span style={{ color: "var(--accent)" }}>Saved ✓</span>}
+        {saved && <span className="text-accent">Saved ✓</span>}
         {save.error && (
-          <span style={{ color: "var(--bad)" }}>
+          <span className="text-bad">
             {save.error instanceof Error ? save.error.message : "Error"}
           </span>
         )}

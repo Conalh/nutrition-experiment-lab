@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, inputClass } from "@/components/ui";
 
 export default function AccountPage() {
   const qc = useQueryClient();
@@ -39,46 +39,38 @@ export default function AccountPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Account</h1>
-      <p style={{ color: "var(--text-dim)", marginTop: 0 }}>
+      <h1 className="text-2xl font-bold">Account</h1>
+      <p className="mt-0 text-muted">
         Your data, your controls. See the{" "}
-        <Link href="/privacy" style={{ color: "var(--accent)" }}>
+        <Link href="/privacy" className="text-accent">
           privacy page
         </Link>{" "}
         for details.
       </p>
 
-      <Card style={{ marginBottom: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Export your data</h3>
-        <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
+      <Card className="mb-4">
+        <h3 className="mt-0 font-semibold">Export your data</h3>
+        <p className="text-sm text-muted">
           Download everything you&apos;ve entered as a single JSON file.
         </p>
         <Button onClick={() => exportData.mutate()} disabled={exportData.isPending}>
           {exportData.isPending ? "Preparing…" : "Export JSON"}
         </Button>
-        {exportData.error && (
-          <p style={{ color: "var(--bad)" }}>Export failed.</p>
-        )}
+        {exportData.error && <p className="text-bad">Export failed.</p>}
       </Card>
 
-      <Card style={{ borderColor: "var(--bad)" }}>
-        <h3 style={{ marginTop: 0, color: "var(--bad)" }}>Delete all data</h3>
-        <p style={{ fontSize: 14, color: "var(--text-dim)" }}>
+      <Card className="border-bad">
+        <h3 className="mt-0 font-semibold text-bad">Delete all data</h3>
+        <p className="text-sm text-muted">
           Permanently deletes every experiment, log, meal, and confounder. This
           cannot be undone. Type <strong>DELETE</strong> to confirm.
         </p>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="flex items-center gap-2.5">
           <input
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="DELETE"
-            style={{
-              background: "var(--surface-2)",
-              border: "1px solid var(--border)",
-              borderRadius: 8,
-              padding: "8px 10px",
-              color: "var(--text)",
-            }}
+            className={`${inputClass} max-w-[160px]`}
           />
           <Button
             variant="danger"
@@ -89,10 +81,9 @@ export default function AccountPage() {
           </Button>
         </div>
         {deleted && (
-          <p style={{ color: "var(--accent)", fontSize: 14 }}>
-            Deleted{" "}
-            {Object.values(deleted).reduce((a, b) => a + b, 0)} rows. Your
-            account is now empty.
+          <p className="text-sm text-accent">
+            Deleted {Object.values(deleted).reduce((a, b) => a + b, 0)} rows.
+            Your account is now empty.
           </p>
         )}
       </Card>

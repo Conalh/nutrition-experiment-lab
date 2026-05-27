@@ -1,24 +1,30 @@
 @import "tailwindcss";
 
-:root {
-  --surface: #0f1115;
-  --surface-2: #161a21;
-  --card: #1b2029;
-  --border: #2a313d;
-  --text: #e7ebf0;
-  --text-dim: #9aa4b2;
-  --accent: #4ade80;
-  --accent-dim: #22361f;
-  --warn: #fbbf24;
-  --bad: #f87171;
+/* Design tokens — Tailwind v4 generates color utilities (bg-*, text-*,
+   border-*) from these automatically. */
+@theme {
+  --color-base: #0f1115;
+  --color-surface: #161a21;
+  --color-card: #1b2029;
+  --color-line: #2a313d;
+  --color-ink: #e7ebf0;
+  --color-muted: #9aa4b2;
+  --color-accent: #4ade80;
+  --color-accent-soft: #22361f;
+  --color-warn: #fbbf24;
+  --color-warn-soft: #3a2f10;
+  --color-bad: #f87171;
+  --color-bad-soft: #3a1818;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 html,
 body {
-  background: var(--surface);
-  color: var(--text);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
 * {

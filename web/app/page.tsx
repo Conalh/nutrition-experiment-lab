@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ExperimentCard } from "@/components/experiment-card";
 import { Button } from "@/components/ui";
+import { EmptyState, ErrorState, Loading } from "@/components/states";
 
 export default function Dashboard() {
   const { data, isLoading, error } = useQuery({
@@ -22,19 +23,10 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
+      <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>
-            Experiments
-          </h1>
-          <p style={{ color: "var(--text-dim)", margin: "4px 0 0" }}>
+          <h1 className="text-2xl font-bold">Experiments</h1>
+          <p className="mt-1 text-muted">
             Run one clean nutrition question at a time.
           </p>
         </div>
@@ -43,24 +35,23 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {isLoading && <p style={{ color: "var(--text-dim)" }}>Loading…</p>}
+      {isLoading && <Loading />}
       {error && (
-        <p style={{ color: "var(--bad)" }}>
-          Could not reach the API. Is the backend running on :8000?
-        </p>
+        <ErrorState
+          message="Could not reach the API."
+          hint="Is the backend running on :8000?"
+        />
       )}
 
-      {!isLoading && experiments.length === 0 && (
-        <div style={{ color: "var(--text-dim)", marginTop: 40 }}>
-          No experiments yet. Create your first one to get started.
-        </div>
+      {!isLoading && !error && experiments.length === 0 && (
+        <EmptyState title="No experiments yet">
+          Create your first one to get started.
+        </EmptyState>
       )}
 
       {active.length > 0 && (
-        <section style={{ marginBottom: 28 }}>
-          <h2 style={{ fontSize: 14, color: "var(--text-dim)", marginBottom: 10 }}>
-            ACTIVE & DRAFT
-          </h2>
+        <section className="mb-7">
+          <h2 className="mb-2.5 text-sm text-muted">ACTIVE &amp; DRAFT</h2>
           {active.map((e) => (
             <ExperimentCard key={e.id} exp={e} />
           ))}
@@ -69,9 +60,7 @@ export default function Dashboard() {
 
       {done.length > 0 && (
         <section>
-          <h2 style={{ fontSize: 14, color: "var(--text-dim)", marginBottom: 10 }}>
-            COMPLETED LIBRARY
-          </h2>
+          <h2 className="mb-2.5 text-sm text-muted">COMPLETED LIBRARY</h2>
           {done.map((e) => (
             <ExperimentCard key={e.id} exp={e} />
           ))}
